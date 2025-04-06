@@ -67,24 +67,26 @@
 
   <script>
     async function checkHeaders(url) {
-      try {
-        const response = await fetch(`https://clickjacking-api.onrender.com/check?url=${encodeURIComponent(url)}`);
-        const data = await response.json();
-        const headers = data.headers || {};
+  try {
+    const response = await fetch(`https://clickjacking-api.onrender.com/check?url=${encodeURIComponent(url)}`);
+    const data = await response.json();
+    const headers = data.headers || {};
 
-        const xfo = headers['x-frame-options'];
-        const csp = headers['content-security-policy'];
+    const xfo = headers['x-frame-options'];
+    const csp = headers['content-security-policy'];
 
-        if ((!xfo || !['deny', 'sameorigin'].includes(xfo.toLowerCase())) &&
-            (!csp || !csp.toLowerCase().includes('frame-ancestors')) ) {
-          return `<p class='vulnerable'>[!] ${url} is <strong>possibly vulnerable</strong> to Clickjacking.</p>`;
-        } else {
-          return `<p class='protected'>[+] ${url} is protected.</p>`;
-        }
-      } catch (error) {
-        return `<p>[x] Could not scan ${url} - ${error.message}</p>`;
-      }
+    if ((!xfo || !['deny', 'sameorigin'].includes(xfo.toLowerCase())) &&
+        (!csp || !csp.toLowerCase().includes('frame-ancestors')) ) {
+      return `<p class='vulnerable'>[!] ${url} is <strong>possibly vulnerable</strong> to Clickjacking.</p>`;
+    } else {
+      return `<p class='protected'>[+] ${url} is protected.</p>`;
     }
+  } catch (error) {
+    return `<p>[x] Could not scan ${url} - ${error.message}</p>`;
+  }
+}
+
+
 
     async function checkWebsites() {
       const input = document.getElementById('websites').value.trim();
