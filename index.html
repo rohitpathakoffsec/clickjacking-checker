@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clickjacking Scanner</title>
+  <style>
+    body {
+      font-family: Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f4;
+    }
+    .container {
+      max-width: 800px;
+      margin: 50px auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    textarea {
+      width: 100%;
+      height: 150px;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      resize: vertical;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .result {
+      margin-top: 20px;
+    }
+    .vulnerable {
+      color: red;
+    }
+    .protected {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Clickjacking Vulnerability Checker</h2>
+    <textarea id="websites" placeholder="Enter one website per line (with https://)"></textarea>
+    <button onclick="checkWebsites()">Check for Clickjacking Protection</button>
+    <div id="results" class="result"></div>
+  </div>
+
+  <script>
+    async function checkHeaders(url) {
+      try {
+        const response = await fetch(`http://localhost:4000/check?url=${encodeURIComponent(url)}`);
+        const data = await response.json();
+        const headers = data.headers || {};
+
+        const xfo = headers['x-frame-options'];
+        const csp = headers['content-security-policy'];
+
+        if ((!xfo || !['deny', 'sameorigin'].includes(xfo.toLowerCase())) &&
+            (!csp || !csp.toLowerCase().includes('frame-ancestors')) ) {
+          return `<p class='vulnerable'>[!] ${url} is <strong>possibly vulnerable</strong> to Clickjacking.</p>`;
+        } else {
+          return `<p class='protected'>[+] ${url} is protected.</p>`;
+        }
+      } catch (error) {
+        return `<p>[x] Could not scan ${url} - ${error.message}</p>`;
+      }
+    }
+
+    async function checkWebsites() {
+      const input = document.getElementById('websites').value.trim();
+      const urls = input.split('\n').map(u => u.trim()).filter(Boolean);
+      const resultsDiv = document.getElementById('results');
+      resultsDiv.innerHTML = '<p>Scanning...</p>';
+
+      const results = await Promise.all(urls.map(checkHeaders));
+      resultsDiv.innerHTML = results.join('');
+    }
+  </script>
+</body>
+</html>
