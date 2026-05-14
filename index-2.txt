@@ -1,17 +1,17 @@
-## 4) SSH Service Allows Password-Based Authentication
+## 5) Weak SSH Key Exchange Algorithms Supported
 
 ### Proper Title
 
-**SSH Service Allows Password-Based Authentication**
+**Weak SSH Key Exchange and Message Authentication Algorithms Supported**
 
 ### Active CWE
 
-**CWE-307: Improper Restriction of Excessive Authentication Attempts**
+**CWE-326: Inadequate Encryption Strength**
 
 ### STRIDE Mapping
 
 **1 - Spoofing Identity**
-**6 - Elevation of Privilege**
+**4 - Information Disclosure**
 
 ### CVSS v3.1
 
@@ -19,217 +19,89 @@
 
 ### Why this score
 
-* **AV:N** – SSH service accessible remotely
-* **AC:L** – password authentication attacks are straightforward
-* **PR:N** – no prior access required
+* **AV:N** – exploitable remotely over the network
+* **AC:L** – attacker only requires network connectivity
+* **PR:N** – no authentication required
 * **UI:N** – no user interaction required
-* **S:U** – impact limited to same system
-* **C:L** – unauthorized access may expose sensitive system data
-* **I:L** – successful compromise may allow modification of system resources
-* **A:N** – no direct availability impact demonstrated
+* **S:U** – impact remains within same security scope
+* **C:L** – weak cryptography may expose SSH session confidentiality
+* **I:L** – cryptographic downgrade weaknesses may affect integrity protections
+* **A:N** – no direct denial-of-service impact demonstrated
 
 ### Affected Asset
 
-* **nec47b36020mgr**
-* **nec47b36020web2**
 * **nec47b36020cn01**
 * **nstm95035nap**
+* Additional SSH-enabled systems where the same algorithms were identified
 
 ### Description
 
-SSH services exposed on multiple systems permitted password-based authentication mechanisms. During service enumeration and authentication review, the servers accepted interactive authentication methods instead of enforcing key-based authentication exclusively.
+SSH services exposed by the assessed systems supported multiple legacy and cryptographically weak key exchange and message authentication algorithms. Enumeration identified deprecated algorithms including:
 
-The exposed SSH services therefore remain susceptible to:
+* `diffie-hellman-group1-sha1`
+* `diffie-hellman-group14-sha1`
+* `hmac-md5`
+* `hmac-sha1`
+* `hmac-md5-96`
+* `hmac-sha1-96`
 
-* Password spraying attacks
-* Credential brute-force attempts
-* Credential stuffing attacks
-* Weak password exploitation
+These algorithms are considered weak due to the use of deprecated cryptographic primitives such as SHA1 and MD5, which are no longer recommended for secure cryptographic operations.
 
 ### Impact
 
-Allowing password-based SSH authentication significantly increases the risk of unauthorized administrative access, particularly in enterprise environments where attackers commonly perform automated password spraying and credential reuse attacks against exposed management services. If weak or reused credentials exist, attackers may gain shell-level access to the affected systems, potentially leading to lateral movement, privilege escalation, and compromise of additional infrastructure components.
+Support for weak SSH cryptographic algorithms increases the risk of cryptographic downgrade attacks and reduces the overall security posture of remote administrative services. Attackers capable of intercepting or manipulating SSH negotiation traffic may attempt to force weaker algorithms during session establishment, potentially weakening confidentiality and integrity protections. Additionally, use of deprecated algorithms may violate modern security hardening standards and enterprise cryptographic compliance requirements.
 
 ### Steps to Reproduce
 
-1. Identify systems exposing SSH:
+1. Run SSH algorithm enumeration against the target system:
 
    ```bash
-   nmap -Pn -sV -p22 <ip>
+   nmap -Pn --script ssh2-enum-algos -p22 <ip>
    ```
 
-2. Attempt SSH connection:
+2. Review the returned SSH algorithm list.
 
-   ```bash
-   ssh test@<ip>
+3. Observe deprecated algorithms such as:
+
+   ```text id="v7h3cs"
+   diffie-hellman-group1-sha1
+   hmac-md5
+   hmac-sha1
    ```
 
-3. Observe that the server prompts for password authentication instead of rejecting password-based logins.
-
-4. Alternatively, enumerate supported authentication methods:
-
-   ```bash
-   nmap --script ssh-auth-methods -p22 <ip>
-   ```
-
-5. Verify that password or keyboard-interactive authentication is supported.
+4. Confirm that weak algorithms are supported by the SSH service.
 
 ### Resolution
 
-* Disable password-based SSH authentication.
-* Enforce SSH public key authentication only.
-* Restrict SSH access to trusted management networks.
-* Implement MFA for administrative remote access.
-* Apply account lockout and monitoring controls against repeated authentication attempts.
-* Continuously monitor SSH logs for brute-force and password spraying activity.
+* Disable deprecated SSH key exchange algorithms.
+* Remove support for SHA1- and MD5-based MAC algorithms.
+* Enforce modern cryptographic standards such as:
+
+  * `curve25519-sha256`
+  * `ecdh-sha2-*`
+  * `chacha20-poly1305`
+  * SHA2-based MAC algorithms
+* Periodically review SSH hardening baselines against current security recommendations.
+* Restrict SSH access to trusted administrative hosts.
 
 ### Evidence
 
 Use screenshots showing:
 
-* Nmap SSH enumeration results
-* SSH connection password prompt
-* Supported SSH authentication methods output
+* Output of:
 
-Strong evidence examples:
-
-```text id="p37yzk"
-22/tcp open ssh
-```
-
-and:
-
-```text id="kjlwm8"
-test@<ip>'s password:
-```
-
-or NSE script output showing password authentication support.
-
-
-
-
-
-
-
-## 5) VNC Service Exposure
-
-### Proper Title
-
-**Exposed VNC Remote Access Service on Non-Standard Port**
-
-### Active CWE
-
-**CWE-284: Improper Access Control**
-
-### STRIDE Mapping
-
-**4 - Information Disclosure**
-**6 - Elevation of Privilege**
-
-### CVSS v3.1
-
-**CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N = 6.5 (Medium)**
-
-### Why this score
-
-* **AV:N** – remotely accessible over the network
-* **AC:L** – no complex conditions required
-* **PR:N** – service reachable without prior authentication
-* **UI:N** – no user interaction required
-* **S:U** – impact remains within same scope
-* **C:L** – remote desktop service exposure discloses remote access capability and protocol details
-* **I:L** – weakly secured remote access services may enable unauthorized interaction if authentication weaknesses exist
-* **A:N** – no direct availability impact demonstrated
-
-### Affected Asset
-
-* **nec47b36020mgr**
-* **nec47b36020bck1**
-
-### Description
-
-VNC remote access services were identified running on non-standard ports during infrastructure enumeration. The exposed services responded using the Remote Framebuffer (RFB) protocol and disclosed the VNC protocol version during unauthenticated interaction.
-
-Testing confirmed responses similar to:
-
-```text id="byyefl"
-RFB 003.008
-```
-
-This indicated that VNC services were externally reachable and actively listening for remote desktop connections.
-
-### Impact
-
-Exposed VNC services increase the remote administration attack surface of the environment. Attackers may use the exposed service to perform:
-
-* Remote access enumeration
-* Authentication attacks
-* Password brute forcing
-* Protocol exploitation attempts
-* Session interception attempts against weakly secured VNC configurations
-
-Additionally, VNC services commonly provide graphical remote access capabilities, making them attractive targets for unauthorized administrative access and lateral movement activities if weak credentials or insecure configurations are present.
-
-### Steps to Reproduce
-
-1. Perform a full port scan against the target:
-
-   ```bash
-   nmap -Pn -sC -sV -p- <ip>
-   ```
-
-2. Identify the exposed VNC service and associated port.
-
-3. Attempt connection using Netcat:
-
-   ```bash
-   nc <ip> <port>
-   ```
-
-4. Observe the VNC protocol banner response:
-
-   ```text id="6yyrsp"
-   RFB 003.008
-   ```
-
-5. Alternatively, attempt graphical connection:
-
-   ```bash
-   vncviewer <ip>:<port>
-   ```
-
-6. Confirm that the service is externally reachable and accepting remote connection attempts.
-
-### Resolution
-
-* Disable VNC services if not operationally required.
-* Restrict VNC access to trusted administrative networks only.
-* Enforce strong authentication and MFA for remote access services.
-* Avoid exposing VNC services directly to broader internal or external networks.
-* Use secure remote administration alternatives with centralized access control and logging.
-* Monitor remote access services for unauthorized access attempts.
-
-### Evidence
-
-Use screenshots showing:
-
-* Nmap output identifying VNC service
-* Netcat response showing:
-
-  ```text id="2ifn4w"
-  RFB 003.008
+  ```bash
+  nmap --script ssh2-enum-algos -p22 <ip>
   ```
-* VNC connection attempt output
-* Listening service evidence from Windows `netstat`
 
-Strong evidence examples:
+* Visible weak algorithms such as:
 
-```text id="1r71iz"
-38171/tcp open vnc VNC (protocol 3.8)
-```
+  ```text id="vaz3j0"
+  diffie-hellman-group1-sha1
+  diffie-hellman-group14-sha1
+  hmac-md5
+  hmac-sha1
+  ```
 
-and:
-
-```text id="55j7zt"
-RFB 003.008
-```
+* Screenshot title suggestion:
+  **“SSH Enumeration Showing Weak Key Exchange and MAC Algorithms”**
