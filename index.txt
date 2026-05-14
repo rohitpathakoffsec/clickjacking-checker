@@ -1,0 +1,729 @@
+## 1. Spoofing Identity (S)
+
+### STRIDE Test Case:
+
+**Check if NGIX Web Console or any other server component uses default credentials.**
+
+**Testing Performed:**
+Authentication testing was performed against exposed management and remote access services identified during infrastructure enumeration across all in-scope servers. Exposed services included RDP (3389), SSH (22), WinRM (5985), HTTPS management interfaces (443/8443), and HTTP administrative interfaces (8080). The assessment included verification for default credentials, weak authentication configurations, and anonymous access exposure.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020cn01
+* nstm95035nap
+* nec47b36020log1
+* nec47b36020tcp1
+* nec47b36020bck1
+
+**Result:**
+No default credentials or anonymous administrative access were identified during testing. Authentication was enforced on exposed services. However, SSH services on Connector and NAP servers supported password-based authentication mechanisms, increasing the attack surface for credential-based attacks.
+
+---
+
+### STRIDE Test Case:
+
+**Attempt access to application APIs by modifying JWT/session tokens (change role/user ID) and verify if Load Balancer/Web Node accepts forged identity.**
+
+**Testing Performed:**
+Authenticated session testing was performed against the web application and exposed endpoints hosted on Web2/Web3 infrastructure. Session handling, token validation, and role-based access control behavior were reviewed by modifying session identifiers, cookies, and user-related parameters where accessible.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+
+**Result:**
+No successful authentication bypass or forged identity acceptance was identified during testing. Session manipulation attempts did not result in unauthorized privilege escalation or impersonation.
+
+---
+
+### STRIDE Test Case:
+
+**Initiate direct connections to Redis/Postgres using service credentials from an unauthorized host to check if internal services trust identity blindly.**
+
+**Testing Performed:**
+Network enumeration and port discovery were conducted against all in-scope servers to identify direct exposure of backend data services including Redis (6379) and PostgreSQL (5432). Additional verification was performed to identify unrestricted database exposure from unauthorized network locations.
+
+**Systems Reviewed:**
+All 8 in-scope servers.
+
+**Result:**
+No Redis or PostgreSQL services were exposed externally. Direct unauthorized connectivity to backend data services was not possible from the testing location.
+
+---
+
+### STRIDE Test Case:
+
+**Send requests with manipulated Host headers/SNI to Load Balancer and verify if routing can be influenced to impersonate another service.**
+
+**Testing Performed:**
+Host header and TLS SNI behavior were reviewed against HTTPS-enabled web infrastructure and connector nodes. SSL certificate mappings, virtual host handling, and routing behavior were analyzed using manipulated requests and certificate enumeration.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020cn01
+* nstm95035nap
+
+**Result:**
+Infrastructure and internal hostnames were disclosed through TLS certificates and Subject Alternative Name (SAN) entries. Internal routing identifiers and backend naming conventions were observable; however, no successful routing manipulation or service impersonation was achieved during testing.
+
+---
+
+### STRIDE Test Case:
+
+**Call internal endpoints (Web/Background/TCP Relay) pretending to be a trusted service and check if service-to-service authentication is missing or weak.**
+
+**Testing Performed:**
+Direct connectivity testing was conducted against exposed internal communication services and relay components identified during enumeration, including ports associated with TCP relay, RPC services, HTTPAPI endpoints, and connector communication services.
+
+**Systems Reviewed:**
+
+* nec47b36020tcp1
+* nec47b36020cn01
+* nstm95035nap
+* nec47b36020bck1
+
+**Result:**
+Several internal communication services were externally reachable, including RPC endpoints, HTTPAPI services, and TCP relay-related ports. While service exposure was confirmed, no successful trust impersonation or unauthorized service-to-service action execution was achieved during testing.
+
+---
+
+### STRIDE Test Case:
+
+**Try to bypass authentication mechanisms (e.g., session fixation, token reuse, or manipulating cookies).**
+
+**Testing Performed:**
+Session handling mechanisms and authentication workflows were reviewed on accessible web application components. Testing included reuse of session tokens, cookie manipulation, and replay of authenticated requests.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+
+**Result:**
+No authentication bypass or session fixation vulnerabilities were identified during testing. Session handling mechanisms appeared to enforce authentication consistently during the performed assessment activities.
+
+---
+
+### STRIDE Test Case:
+
+**Try to access admin user functionality with normal user accounts.**
+
+**Testing Performed:**
+Authorization testing was conducted against accessible application functionality and server-level administrative interfaces using available authenticated user access. Attempts were made to access privileged operations, restricted endpoints, and administrative functions without elevated privileges.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020log1
+* nec47b36020bck1
+
+**Result:**
+No unauthorized administrative functionality access was identified during testing. Role separation appeared enforced for tested interfaces and accessible functionality.
+
+
+## 2. Tampering with Data (T)
+
+### STRIDE Test Case:
+
+**Intercept and modify traffic between Web Node <> backend services (Redis/Postgres/TCP Relay) to verify whether TLS and integrity checks are enforced.**
+
+**Testing Performed:**
+Network exposure and communication channels between externally reachable services were reviewed through service enumeration and protocol inspection. HTTPS/TLS-enabled services on ports 443 and 8443 were analyzed for transport protection and exposed backend communication behavior. Internal communication ports related to RPC, relay, and connector services were also reviewed for direct accessibility.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020tcp1
+* nec47b36020cn01
+* nstm95035nap
+
+**Result:**
+TLS was enforced on HTTPS-enabled services; however, multiple internal communication services and RPC endpoints were externally reachable. No direct evidence of successful traffic tampering or integrity bypass was identified during testing. TLS configuration review identified weak SSH cryptographic algorithm support on certain systems, increasing risk related to communication security hardening.
+
+---
+
+### STRIDE Test Case:
+
+**Modify request parameters (IDs, roles, flags) and validate whether backend logic accepts altered values without server-side validation.**
+
+**Testing Performed:**
+Input manipulation testing was conducted against accessible application functionality hosted on Web2 and Web3 systems. User-controlled parameters, session-related values, identifiers, and role-related inputs were modified to evaluate backend validation enforcement.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+
+**Result:**
+No successful parameter tampering leading to unauthorized access, privilege escalation, or backend logic bypass was identified during testing. Backend validation appeared to enforce authorization consistently for tested scenarios.
+
+---
+
+### STRIDE Test Case:
+
+**Inject or alter payloads processed by Background Node (jobs/tasks) and confirm whether integrity validation exists before execution.**
+
+**Testing Performed:**
+Background communication services, relay ports, and RPC interfaces exposed on backup, connector, and relay-related systems were reviewed to identify insecure task processing or externally accessible job execution mechanisms.
+
+**Systems Reviewed:**
+
+* nec47b36020bck1
+* nec47b36020tcp1
+* nec47b36020cn01
+* nstm95035nap
+
+**Result:**
+Several backend communication and RPC services were externally reachable; however, no direct task execution or payload injection vector was successfully identified during testing. No evidence of unauthorized background task manipulation was observed.
+
+---
+
+### STRIDE Test Case:
+
+**Check if a normal user can modify files in application directories, web roots, backups, scripts, or scheduled task paths.**
+
+**Testing Performed:**
+Local privilege and file permission testing were performed through authenticated RDP access on Windows servers. File system enumeration was conducted to identify writable files and directories accessible to low-privileged authenticated users. Log directories and application-related storage locations were specifically reviewed for weak ACL configurations.
+
+**Systems Reviewed:**
+
+* nec47b36020log1
+* Additional Windows servers reviewed during authenticated testing
+
+**Result:**
+Multiple writable log files and directories accessible to authenticated users were identified outside protected Windows and Program Files locations. Weak file permissions allowed modification capability over certain application-generated log files. This condition may enable log tampering, evidence manipulation, or abuse by low-privileged users.
+
+**Associated Finding:**
+
+* Writable Log Files Accessible by Authenticated Users
+
+---
+
+### STRIDE Test Case:
+
+**Check if unauthorized users modify config files or permissions on server, to exfiltrate data.**
+
+**Testing Performed:**
+Permission testing was conducted against accessible application and system directories to identify unauthorized write access to configuration-related files, scripts, scheduled task locations, or sensitive operational directories.
+
+**Systems Reviewed:**
+
+* nec47b36020log1
+* nec47b36020bck1
+* Additional authenticated Windows systems reviewed during testing
+
+**Result:**
+No unauthorized modification access to protected system configuration files or core operating system directories was identified during testing. Protected directories such as `C:\Windows`, `C:\Program Files`, and `C:\ProgramData` enforced restrictive permissions appropriately. Writable access was primarily observed on selected non-system log storage locations.
+
+
+  ## 3. Repudiation (R)
+
+### STRIDE Test Case:
+
+**Perform sensitive operations (login, data modification, admin actions) and verify whether actions are consistently logged across Load Balancer, Web Node, and backend systems.**
+
+**Testing Performed:**
+Authenticated access and operational activities were performed across exposed Windows servers and web infrastructure components. Administrative interfaces including RDP, WinRM, SSH, and web-accessible services were reviewed to identify observable logging behavior and accessible log storage locations.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020log1
+* nec47b36020bck1
+* nec47b36020tcp1
+* nec47b36020cn01
+* nstm95035nap
+
+**Result:**
+Application and system-generated log files were present across multiple systems, indicating logging mechanisms were enabled for operational and service activity. Centralized and application-specific logging directories were identified during authenticated testing.
+
+---
+
+### STRIDE Test Case:
+
+**Attempt to delete or alter logs from Logging Node or via accessible interfaces and check if proper access controls prevent modification.**
+
+**Testing Performed:**
+Authenticated file permission testing was conducted on the logging server and associated application log directories to determine whether low-privileged users could modify operational log files.
+
+**Systems Reviewed:**
+
+* nec47b36020log1
+
+**Result:**
+Multiple log files outside protected Windows system directories were modifiable by authenticated users due to weak file permissions. Authenticated users possessed modify-level access (`M`) on several log storage locations, allowing alteration of log contents and potential evidence tampering.
+
+**Associated Finding:**
+
+* Writable Log Files Accessible by Authenticated Users
+
+---
+
+### STRIDE Test Case:
+
+**Send manipulated timestamps or replay requests and confirm whether server-side logging enforces correct time and sequencing.**
+
+**Testing Performed:**
+System time synchronization and timestamp behavior were reviewed through Nmap service enumeration, RDP NTLM information, SMB time responses, and replay-style authentication observations during testing.
+
+**Systems Reviewed:**
+All assessed systems.
+
+**Result:**
+Consistent system time synchronization and SMB timestamp behavior were observed across the environment. No inconsistent sequencing, timestamp manipulation acceptance, or replay-related logging anomalies were identified during testing.
+
+---
+
+### STRIDE Test Case:
+
+**Attempt to access or download log files as a normal user.**
+
+**Testing Performed:**
+Authenticated enumeration of filesystem paths and application log storage locations was conducted through RDP access. Log accessibility and file permission inheritance were reviewed using directory enumeration and ACL inspection.
+
+**Systems Reviewed:**
+
+* nec47b36020log1
+
+**Result:**
+Authenticated users were able to access and read multiple application-generated log files stored outside protected operating system directories. Certain log locations additionally permitted modification access.
+
+**Associated Finding:**
+
+* Writable Log Files Accessible by Authenticated Users
+
+---
+
+### STRIDE Test Case:
+
+**Check if failed and successful logins recorded.**
+
+**Testing Performed:**
+Authentication workflows were exercised across SSH, RDP, SMB, WinRM, and HTTP-based services to review observable login handling and logging-related behavior.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020cn01
+* nstm95035nap
+* nec47b36020bck1
+
+**Result:**
+Authentication services consistently enforced credential validation and generated standard authentication responses during testing. System logging infrastructure and operational log generation were observed across multiple systems.
+
+---
+
+### STRIDE Test Case:
+
+**Trigger errors with crafted inputs and verify logs do not miss critical activity or allow ambiguity in identifying the actor.**
+
+**Testing Performed:**
+Malformed requests, invalid HTTP requests, unsupported endpoint access, and unexpected protocol interactions were sent to exposed HTTP, HTTPS, RPC, SSH, and connector services to evaluate service behavior and observable error handling.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020cn01
+* nstm95035nap
+
+**Result:**
+Services returned controlled error responses including HTTP 403 and HTTP 404 messages without exposing stack traces or uncontrolled application exceptions. No ambiguous or unstable service behavior was observed during malformed request handling.
+
+## 4. Information Disclosure (I)
+
+### STRIDE Test Case:
+
+**Attempt unauthorized access to Redis (port 6379) and check whether data can be retrieved without authentication or network restriction.**
+
+**Testing Performed:**
+Network enumeration and full TCP port scanning were performed across all in-scope servers to identify exposure of Redis services and validate whether backend datastore services were externally accessible.
+
+**Systems Reviewed:**
+All assessed servers.
+
+**Result:**
+No Redis service exposure was identified on the assessed systems. Unauthorized access to Redis data stores was not possible from the testing network.
+
+---
+
+### STRIDE Test Case:
+
+**Try connecting to Postgres (port 5432) from unauthorized sources and verify if database exposure is restricted.**
+
+**Testing Performed:**
+Network-level enumeration and service discovery were conducted against all assessed systems to identify externally accessible PostgreSQL services and verify unauthorized connectivity exposure.
+
+**Systems Reviewed:**
+All assessed servers.
+
+**Result:**
+No PostgreSQL services were externally exposed during testing. Direct unauthorized database access from the testing network was not possible.
+
+---
+
+### STRIDE Test Case:
+
+**Trigger application errors and inspect responses for stack traces, internal paths, or configuration leakage.**
+
+**Testing Performed:**
+Malformed requests, invalid HTTP requests, unsupported endpoint access attempts, and directory brute-force testing were performed against HTTP/HTTPS services and connector endpoints.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020cn01
+* nstm95035nap
+* nec47b36020tcp1
+* nec47b36020log1
+
+**Result:**
+Applications and services returned controlled error responses such as HTTP 403 and HTTP 404 messages. No stack traces, debug messages, application exceptions, or sensitive internal file paths were disclosed through error handling behavior.
+
+---
+
+### STRIDE Test Case:
+
+**Review logs in Logging Node to verify whether sensitive data (tokens, credentials, PII) is exposed in plaintext.**
+
+**Testing Performed:**
+Authenticated review of accessible application and operational log files was conducted on the logging infrastructure to identify sensitive information exposure within stored logs.
+
+**Systems Reviewed:**
+
+* nec47b36020log1
+
+**Result:**
+Multiple application-generated log files were accessible to authenticated users. Internal operational details and service activity information were observable within log storage locations. No plaintext credentials or authentication secrets were directly identified during the reviewed samples.
+
+---
+
+### STRIDE Test Case:
+
+**Attempt direct access to internal components (Background Node, TCP Relay, internal APIs on 808/443) from external network and verify exposure.**
+
+**Testing Performed:**
+Direct connectivity testing and service enumeration were conducted against exposed internal communication services, connector services, relay interfaces, RPC endpoints, and HTTPAPI-based management services.
+
+**Systems Reviewed:**
+
+* nec47b36020tcp1
+* nec47b36020cn01
+* nstm95035nap
+* nec47b36020bck1
+* nec47b36020log1
+
+**Result:**
+Several internal-facing services and management interfaces were externally accessible, including RPC services, HTTPAPI endpoints, WinRM, connector services, VNC services, and relay-related interfaces. Internal infrastructure naming conventions and service metadata were disclosed through banners, certificates, and protocol responses.
+
+**Associated Findings:**
+
+* Internal Infrastructure Information Disclosure
+* Exposure of Internal Administrative Services
+
+---
+
+### STRIDE Test Case:
+
+**Check if user can access files or data directly without any authorization.**
+
+**Testing Performed:**
+Authenticated filesystem review and service interaction testing were conducted to identify unauthorized direct access to application data, log files, or operational artifacts.
+
+**Systems Reviewed:**
+
+* nec47b36020log1
+
+**Result:**
+Authenticated users were able to directly access multiple application-generated log files stored outside protected operating system directories. Certain accessible files additionally permitted modification access due to weak permissions.
+
+**Associated Finding:**
+
+* Writable Log Files Accessible by Authenticated Users
+
+---
+
+### STRIDE Test Case:
+
+**Attempt directory traversal attacks to access sensitive files.**
+
+**Testing Performed:**
+Directory and endpoint enumeration testing were performed against exposed HTTP/HTTPS services and management endpoints using malformed and traversal-style requests.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020cn01
+* nstm95035nap
+
+**Result:**
+No successful directory traversal condition was identified during testing. Sensitive operating system files and restricted application resources were not accessible through traversal-based request manipulation.
+
+---
+
+### STRIDE Test Case:
+
+**Check if config files exposing passwords, tokens, connection strings, API keys.**
+
+**Testing Performed:**
+Authenticated filesystem enumeration and log/configuration review were conducted to identify exposed configuration files, connection strings, API keys, tokens, or embedded credentials within accessible directories and log storage locations.
+
+**Systems Reviewed:**
+
+* nec47b36020log1
+* Additional authenticated Windows systems reviewed during testing
+
+**Result:**
+Accessible operational and application log locations were identified; however, no plaintext passwords, API keys, database connection strings, or authentication tokens were identified within the reviewed files during testing.
+
+
+  ## 6. Elevation of Privilege (E)
+
+### STRIDE Test Case:
+
+**Modify user roles/permissions in requests and verify whether privilege escalation is possible due to missing server-side checks.**
+
+**Testing Performed:**
+Authorization testing and request manipulation activities were conducted against accessible web application functionality and authenticated sessions hosted on web infrastructure systems. User-controlled identifiers, role-related parameters, and session values were reviewed for insecure privilege handling.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+
+**Result:**
+No successful privilege escalation through request parameter manipulation or role tampering was identified during testing. Server-side authorization controls appeared to enforce role separation consistently for the tested functionality.
+
+---
+
+### STRIDE Test Case:
+
+**Attempt access to admin or internal endpoints from a normal-privileged user and check enforcement of RBAC across components.**
+
+**Testing Performed:**
+Administrative interfaces and internal service endpoints including RDP, WinRM, HTTP management services, connector interfaces, and RPC services were reviewed using authenticated low-privileged access to identify unauthorized administrative functionality exposure.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020cn01
+* nstm95035nap
+* nec47b36020log1
+* nec47b36020bck1
+
+**Result:**
+Administrative services and internal interfaces were reachable across multiple systems; however, authentication and access control enforcement restricted unauthorized administrative access during testing. No RBAC bypass or unauthorized privileged functionality access was identified.
+
+---
+
+### STRIDE Test Case:
+
+**Exploit trust between Web Node and Background Node to execute privileged operations without proper authorization.**
+
+**Testing Performed:**
+Internal communication interfaces, connector services, relay ports, and backend RPC-related services were reviewed to identify insecure trust relationships or unauthorized execution paths between interconnected components.
+
+**Systems Reviewed:**
+
+* nec47b36020tcp1
+* nec47b36020bck1
+* nec47b36020cn01
+* nstm95035nap
+
+**Result:**
+Multiple backend communication interfaces and relay-related services were externally reachable; however, no unauthorized privileged operation execution or trust exploitation between interconnected services was achieved during testing.
+
+---
+
+### STRIDE Test Case:
+
+**Check if vertical and horizontal privilege escalation is possible via the current configuration or by altering it.**
+
+**Testing Performed:**
+Local permission reviews, accessible service analysis, and authenticated user capability testing were performed to identify opportunities for privilege escalation through weak configuration, insecure access control, or modifiable resources.
+
+**Systems Reviewed:**
+
+* nec47b36020log1
+* Additional authenticated Windows systems reviewed during testing
+
+**Result:**
+Weak permissions were identified on several application-generated log file locations accessible to authenticated users. While direct operating system privilege escalation was not achieved, insecure file permissions introduced the possibility of unauthorized tampering and operational abuse by low-privileged users.
+
+**Associated Finding:**
+
+* Writable Log Files Accessible by Authenticated Users
+
+---
+
+### STRIDE Test Case:
+
+**Check for the vulnerable components related to NIX which can result in privilege escalation.**
+
+**Testing Performed:**
+Service version enumeration and cryptographic configuration reviews were conducted against exposed infrastructure services including SSH, HTTPAPI, IIS, RDP, WinRM, and custom connector-related services. SSH cryptographic algorithms and exposed third-party daemon implementations were specifically reviewed.
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020cn01
+* nstm95035nap
+* nec47b36020mgr
+
+**Result:**
+Custom SSH daemon implementations and legacy SSH cryptographic algorithms were identified on multiple systems, including support for deprecated algorithms such as `diffie-hellman-group1-sha1`, `diffie-hellman-group14-sha1`, `hmac-md5`, and `hmac-sha1`. These configurations reduce cryptographic hardening and increase exposure to known weaknesses associated with outdated SSH security configurations.
+
+**Associated Findings:**
+
+* Weak SSH Cryptographic Algorithms Supported
+* Custom SSH Daemon Exposure
+
+---
+
+### STRIDE Test Case:
+
+**Check any services running with weak file permission or unquoted paths.**
+
+**Testing Performed:**
+Authenticated Windows privilege assessment activities were performed to identify weak ACL configurations, writable service-related paths, modifiable directories, and insecure file permissions associated with application and operational components.
+
+**Systems Reviewed:**
+
+* nec47b36020log1
+* Additional authenticated Windows systems reviewed during testing
+
+**Result:**
+Weak ACL configurations were identified on several application-generated log storage locations where authenticated users possessed modify-level access permissions. No unquoted service path vulnerabilities were identified during the performed assessment activities.
+
+**Associated Finding:**
+
+* Writable Log Files Accessible by Authenticated Users
+
+---
+
+### STRIDE Test Case:
+
+**Attempt to execute database-level privileged actions via application inputs or TCP Relay and verify whether least privilege is enforced.**
+
+**Testing Performed:**
+Direct interaction testing was conducted against exposed backend communication services, connector interfaces, and relay-related ports to identify unauthorized privileged backend operations or database interaction capabilities.
+
+**Systems Reviewed:**
+
+* nec47b36020tcp1
+* nec47b36020cn01
+* nstm95035nap
+* nec47b36020bck1
+
+**Result:**
+Backend communication interfaces and relay-related services were externally reachable; however, no unauthorized database-level actions or privileged backend command execution paths were identified during testing.
+
+
+  ## 7. Others
+
+### STRIDE Test Case:
+
+**Unauthenticated and Authenticated infrastructure test**
+
+**Testing Performed:**
+Comprehensive unauthenticated and authenticated infrastructure assessment activities were performed across all in-scope servers. Testing included:
+
+* Full TCP port enumeration
+* Service identification and version detection
+* SSL/TLS review
+* SMB/RPC enumeration
+* SSH configuration analysis
+* HTTP/HTTPS endpoint review
+* WinRM exposure validation
+* VNC exposure testing
+* Authenticated Windows permission review through RDP access
+* File permission and log access assessment
+
+**Systems Reviewed:**
+
+* nec47b36020mgr
+* nec47b36020bck1
+* nec47b36020log1
+* nec47b36020tcp1
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020cn01
+* nstm95035nap
+
+**Result:**
+The assessment identified multiple exposed administrative and internal communication services across the environment, including RDP, SSH, WinRM, VNC, RPC, HTTPAPI, IIS, and connector-related services. Authenticated testing further identified weak file permission configurations affecting application-generated log storage locations.
+
+---
+
+### STRIDE Test Case:
+
+**Check against latest CVEs and SSL related vulnerabilities**
+
+**Testing Performed:**
+Service version enumeration, SSH algorithm analysis, and SSL/TLS configuration reviews were conducted against exposed services using Nmap NSE scripts and manual verification techniques. TLS certificate validity, supported cipher suites, SSH cryptographic algorithms, and exposed third-party service implementations were reviewed.
+
+**Systems Reviewed:**
+
+* nec47b36020mgr
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020cn01
+* nstm95035nap
+
+**Result:**
+The assessment identified:
+
+* Support for legacy SSH cryptographic algorithms including SHA1- and MD5-based algorithms
+* Exposure of custom `IPWorks SSH Daemon 2020` implementations
+* Expired SSL/TLS certificate identified on `nstm95035nap.eng.wintel.ubseng.net`
+* Broad exposure of remote administrative services across multiple systems
+
+No direct remote code execution vulnerabilities were confirmed during the performed assessment activities.
+
+**Associated Findings:**
+
+* Weak SSH Cryptographic Algorithms Supported
+* Expired SSL/TLS Certificate
+* Custom SSH Daemon Exposure
+
+---
+
+### STRIDE Test Case:
+
+**Standard MPT Objectives for web application testing**
+
+**Testing Performed:**
+Web application and exposed HTTP/HTTPS interfaces were reviewed for:
+
+* Authentication enforcement
+* Session handling behavior
+* Error handling
+* Directory and endpoint enumeration
+* TLS exposure
+* Administrative interface exposure
+* Information disclosure through banners and certificates
+* Unauthorized access attempts
+* Access control enforcement
+
+**Systems Reviewed:**
+
+* nec47b36020web2
+* nec47b36020web3
+* nec47b36020cn01
+* nstm95035nap
+
+**Result:**
+The assessment identified exposed web infrastructure and management services, including IIS, HTTPAPI services, connector interfaces, and HTTPS administrative endpoints. Error handling responses were controlled and did not disclose stack traces or application exceptions. Internal infrastructure naming information and service metadata were disclosed through TLS certificates, banners, and protocol responses. No authentication bypass or direct unauthorized application access was identified during testing.
+
