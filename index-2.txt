@@ -1,0 +1,95 @@
+## 1) HTTPAPI Internal Server Disclosure
+
+### Proper Title
+
+**HTTPAPI Internal Server Disclosure**
+
+### Active CWE
+
+**CWE-200: Exposure of Sensitive Information to an Unauthorized Actor**
+
+### STRIDE Mapping
+
+**4 - Information Disclosure**
+
+### CVSS v3.1
+
+**CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N = 5.3 (Medium)**
+
+### Why this score
+
+* **AV:N** – the information is exposed over the network
+* **AC:L** – no special conditions are needed beyond reaching the service
+* **PR:N** – no authentication was required
+* **UI:N** – no user interaction is needed
+* **S:U** – impact stays within the same scope
+* **C:L** – the service reveals internal server fingerprints, service headers, hostnames, and that an internal HTTPAPI service is present
+* **I:N / A:N** – no integrity or availability impact was demonstrated
+
+### Affected Asset
+
+* **nec47b36020mgr** (`10.191.57.78`)
+* **nec47b36020bck1** (`10.191.57.83`)
+* **nec47b36020log1** (`10.191.57.84`)
+* **nec47b36020tcp1** (`10.191.57.82`)
+* **nec47b36020web2** (`10.191.57.76`)
+* **nec47b36020web3** (`10.191.57.77`)
+* **nec47b36020cn01** (`10.125.72.230`)
+* **nstm95035nap** (`10.211.201.124`)
+
+### Description
+
+Multiple Windows servers exposed **Microsoft HTTPAPI/2.0** services on management-related ports such as **47001** and **5985**. The service responses returned **404 Not Found** pages with the `Microsoft-HTTPAPI/2.0` server header, confirming that internal HTTP services are reachable and fingerprintable from the testing network. In several cases, these HTTPAPI services were part of broader internal management or relay surfaces, increasing reconnaissance value for an attacker.
+
+### Steps to Reproduce
+
+1. From Kali, run Nmap or curl against the exposed HTTPAPI ports on any affected server.
+2. Example:
+
+   ```bash
+   nmap -Pn -sC -sV -p47001,5985 <ip>
+   ```
+
+   or
+
+   ```bash
+   curl -v http://<ip>:47001/
+   curl -v http://<ip>:5985/
+   ```
+3. Observe that the service responds with:
+
+   * `Microsoft-HTTPAPI/2.0`
+   * `HTTP/1.1 404 Not Found` or similar response
+4. Confirm that the service is exposed without requiring prior authentication.
+
+### Resolution
+
+* Restrict access to internal HTTPAPI/management services using network segmentation and firewall rules.
+* Expose WinRM and internal HTTPAPI endpoints only to authorized administrative hosts.
+* Remove or reduce unnecessary service banner disclosure where possible.
+* Ensure management interfaces are not reachable from untrusted network segments.
+
+### Evidence
+
+Use a screenshot showing:
+
+* The **Nmap output** or **curl output**
+* The **port number** (`47001` or `5985`)
+* The **`Microsoft-HTTPAPI/2.0`** header
+* The **404 Not Found** response
+
+A strong evidence screenshot would be the terminal output from:
+
+```bash
+curl -v http://<ip>:47001/
+```
+
+or the Nmap output showing:
+
+```text
+47001/tcp open http Microsoft HTTPAPI httpd 2.0
+_http-server-header: Microsoft-HTTPAPI/2.0
+_http-title: Not Found
+```
+
+Send the second finding and I will format it the same way.
