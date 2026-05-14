@@ -1,98 +1,235 @@
-## 3) Microsoft IIS Server Version Disclosure
+## 4) SSH Service Allows Password-Based Authentication
 
 ### Proper Title
 
-**Microsoft IIS Server Version Disclosure**
+**SSH Service Allows Password-Based Authentication**
 
 ### Active CWE
 
-**CWE-497: Exposure of System Data to an Unauthorized Control Sphere**
+**CWE-307: Improper Restriction of Excessive Authentication Attempts**
 
 ### STRIDE Mapping
 
-**4 - Information Disclosure**
+**1 - Spoofing Identity**
+**6 - Elevation of Privilege**
 
 ### CVSS v3.1
 
-**CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N = 5.3 (Medium)**
+**CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N = 6.5 (Medium)**
 
 ### Why this score
 
-* **AV:N** – remotely accessible over the network
-* **AC:L** – simple request reveals the information
-* **PR:N** – no authentication required
-* **UI:N** – no user interaction needed
+* **AV:N** – SSH service accessible remotely
+* **AC:L** – password authentication attacks are straightforward
+* **PR:N** – no prior access required
+* **UI:N** – no user interaction required
 * **S:U** – impact limited to same system
-* **C:L** – server technology and exact version details disclosed
-* **I:N / A:N** – no direct integrity or availability impact observed
+* **C:L** – unauthorized access may expose sensitive system data
+* **I:L** – successful compromise may allow modification of system resources
+* **A:N** – no direct availability impact demonstrated
 
 ### Affected Asset
 
+* **nec47b36020mgr**
 * **nec47b36020web2**
-* **nec47b36020web3**
+* **nec47b36020cn01**
+* **nstm95035nap**
 
 ### Description
 
-The web servers exposed the exact Microsoft IIS version through HTTP response headers. During testing, the `Server` header disclosed the backend web server as:
+SSH services exposed on multiple systems permitted password-based authentication mechanisms. During service enumeration and authentication review, the servers accepted interactive authentication methods instead of enforcing key-based authentication exclusively.
 
-```text id="5bm0qs"
-Microsoft-IIS/10.0
-```
+The exposed SSH services therefore remain susceptible to:
 
-The information was accessible without authentication and could be obtained through standard HTTP requests.
+* Password spraying attacks
+* Credential brute-force attempts
+* Credential stuffing attacks
+* Weak password exploitation
 
 ### Impact
 
-Disclosure of the exact IIS server version assists attackers in fingerprinting the target environment and mapping known vulnerabilities associated with the identified software version. Attackers can leverage this information to perform targeted exploitation attempts, vulnerability scanning, or identify applicable public exploits against the disclosed server technology. Although version disclosure alone does not directly compromise the server, it significantly improves the accuracy and efficiency of further attacks against the infrastructure.
+Allowing password-based SSH authentication significantly increases the risk of unauthorized administrative access, particularly in enterprise environments where attackers commonly perform automated password spraying and credential reuse attacks against exposed management services. If weak or reused credentials exist, attackers may gain shell-level access to the affected systems, potentially leading to lateral movement, privilege escalation, and compromise of additional infrastructure components.
 
 ### Steps to Reproduce
 
-1. Send an HTTP/HTTPS request to the affected web server:
+1. Identify systems exposing SSH:
 
    ```bash
-   curl -I http://<ip>
+   nmap -Pn -sV -p22 <ip>
    ```
 
-   or
+2. Attempt SSH connection:
 
    ```bash
-   curl -k -I https://<ip>
+   ssh test@<ip>
    ```
 
-2. Observe the HTTP response headers.
+3. Observe that the server prompts for password authentication instead of rejecting password-based logins.
 
-3. Verify that the `Server` header discloses:
+4. Alternatively, enumerate supported authentication methods:
 
-   ```text id="0omvq4"
-   Server: Microsoft-IIS/10.0
+   ```bash
+   nmap --script ssh-auth-methods -p22 <ip>
    ```
 
-4. Confirm that the information is accessible without authentication.
+5. Verify that password or keyboard-interactive authentication is supported.
 
 ### Resolution
 
-* Remove or suppress unnecessary HTTP response headers disclosing backend technology details.
-* Configure IIS to hide or customize the `Server` header.
-* Implement reverse proxy or WAF rules to minimize technology fingerprinting exposure.
-* Regularly patch and harden IIS services against publicly known vulnerabilities.
+* Disable password-based SSH authentication.
+* Enforce SSH public key authentication only.
+* Restrict SSH access to trusted management networks.
+* Implement MFA for administrative remote access.
+* Apply account lockout and monitoring controls against repeated authentication attempts.
+* Continuously monitor SSH logs for brute-force and password spraying activity.
 
 ### Evidence
 
 Use screenshots showing:
 
-* Browser response headers
-* Burp Suite response
-* Curl output
-* Nmap service enumeration output
+* Nmap SSH enumeration results
+* SSH connection password prompt
+* Supported SSH authentication methods output
 
-Important evidence to capture:
+Strong evidence examples:
 
-```text id="jlwmre"
-_http-server-header: Microsoft-IIS/10.0
+```text id="p37yzk"
+22/tcp open ssh
 ```
 
-or:
+and:
 
-```text id="zjdhm0"
-Server: Microsoft-IIS/10.0
+```text id="kjlwm8"
+test@<ip>'s password:
+```
+
+or NSE script output showing password authentication support.
+
+
+
+
+
+
+
+## 5) VNC Service Exposure
+
+### Proper Title
+
+**Exposed VNC Remote Access Service on Non-Standard Port**
+
+### Active CWE
+
+**CWE-284: Improper Access Control**
+
+### STRIDE Mapping
+
+**4 - Information Disclosure**
+**6 - Elevation of Privilege**
+
+### CVSS v3.1
+
+**CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N = 6.5 (Medium)**
+
+### Why this score
+
+* **AV:N** – remotely accessible over the network
+* **AC:L** – no complex conditions required
+* **PR:N** – service reachable without prior authentication
+* **UI:N** – no user interaction required
+* **S:U** – impact remains within same scope
+* **C:L** – remote desktop service exposure discloses remote access capability and protocol details
+* **I:L** – weakly secured remote access services may enable unauthorized interaction if authentication weaknesses exist
+* **A:N** – no direct availability impact demonstrated
+
+### Affected Asset
+
+* **nec47b36020mgr**
+* **nec47b36020bck1**
+
+### Description
+
+VNC remote access services were identified running on non-standard ports during infrastructure enumeration. The exposed services responded using the Remote Framebuffer (RFB) protocol and disclosed the VNC protocol version during unauthenticated interaction.
+
+Testing confirmed responses similar to:
+
+```text id="byyefl"
+RFB 003.008
+```
+
+This indicated that VNC services were externally reachable and actively listening for remote desktop connections.
+
+### Impact
+
+Exposed VNC services increase the remote administration attack surface of the environment. Attackers may use the exposed service to perform:
+
+* Remote access enumeration
+* Authentication attacks
+* Password brute forcing
+* Protocol exploitation attempts
+* Session interception attempts against weakly secured VNC configurations
+
+Additionally, VNC services commonly provide graphical remote access capabilities, making them attractive targets for unauthorized administrative access and lateral movement activities if weak credentials or insecure configurations are present.
+
+### Steps to Reproduce
+
+1. Perform a full port scan against the target:
+
+   ```bash
+   nmap -Pn -sC -sV -p- <ip>
+   ```
+
+2. Identify the exposed VNC service and associated port.
+
+3. Attempt connection using Netcat:
+
+   ```bash
+   nc <ip> <port>
+   ```
+
+4. Observe the VNC protocol banner response:
+
+   ```text id="6yyrsp"
+   RFB 003.008
+   ```
+
+5. Alternatively, attempt graphical connection:
+
+   ```bash
+   vncviewer <ip>:<port>
+   ```
+
+6. Confirm that the service is externally reachable and accepting remote connection attempts.
+
+### Resolution
+
+* Disable VNC services if not operationally required.
+* Restrict VNC access to trusted administrative networks only.
+* Enforce strong authentication and MFA for remote access services.
+* Avoid exposing VNC services directly to broader internal or external networks.
+* Use secure remote administration alternatives with centralized access control and logging.
+* Monitor remote access services for unauthorized access attempts.
+
+### Evidence
+
+Use screenshots showing:
+
+* Nmap output identifying VNC service
+* Netcat response showing:
+
+  ```text id="2ifn4w"
+  RFB 003.008
+  ```
+* VNC connection attempt output
+* Listening service evidence from Windows `netstat`
+
+Strong evidence examples:
+
+```text id="1r71iz"
+38171/tcp open vnc VNC (protocol 3.8)
+```
+
+and:
+
+```text id="55j7zt"
+RFB 003.008
 ```
