@@ -1,17 +1,17 @@
-## 5) Weak SSH Key Exchange Algorithms Supported
+## 6) Expired SSL/TLS Certificate
 
 ### Proper Title
 
-**Weak SSH Key Exchange and Message Authentication Algorithms Supported**
+**Expired SSL/TLS Certificate Identified on HTTPS Service**
 
 ### Active CWE
 
-**CWE-326: Inadequate Encryption Strength**
+**CWE-295: Improper Certificate Validation**
 
 ### STRIDE Mapping
 
-**1 - Spoofing Identity**
 **4 - Information Disclosure**
+**1 - Spoofing Identity**
 
 ### CVSS v3.1
 
@@ -19,89 +19,78 @@
 
 ### Why this score
 
-* **AV:N** – exploitable remotely over the network
-* **AC:L** – attacker only requires network connectivity
+* **AV:N** – remotely exploitable over the network
+* **AC:L** – no special attack complexity required
 * **PR:N** – no authentication required
-* **UI:N** – no user interaction required
-* **S:U** – impact remains within same security scope
-* **C:L** – weak cryptography may expose SSH session confidentiality
-* **I:L** – cryptographic downgrade weaknesses may affect integrity protections
-* **A:N** – no direct denial-of-service impact demonstrated
+* **UI:N** – users may unknowingly trust invalid certificates
+* **S:U** – impact remains within same scope
+* **C:L** – expired certificates weaken trust validation and confidentiality assurance
+* **I:L** – increases risk of spoofing or interception attacks
+* **A:N** – no direct availability impact observed
 
 ### Affected Asset
 
-* **nec47b36020cn01**
-* **nstm95035nap**
-* Additional SSH-enabled systems where the same algorithms were identified
+* **nstm95035nap.eng.wintel.ubseng.net**
+
+  * Port: `443/tcp`
 
 ### Description
 
-SSH services exposed by the assessed systems supported multiple legacy and cryptographically weak key exchange and message authentication algorithms. Enumeration identified deprecated algorithms including:
+The HTTPS service exposed an expired SSL/TLS certificate during service enumeration. The certificate validity period observed during testing was:
 
-* `diffie-hellman-group1-sha1`
-* `diffie-hellman-group14-sha1`
-* `hmac-md5`
-* `hmac-sha1`
-* `hmac-md5-96`
-* `hmac-sha1-96`
+```text id="8byj8n"
+Not valid before: 2019-03-23T19:07:29
+Not valid after: 2021-03-22T19:07:29
+```
 
-These algorithms are considered weak due to the use of deprecated cryptographic primitives such as SHA1 and MD5, which are no longer recommended for secure cryptographic operations.
+The service continued to present the expired certificate to connecting clients.
 
 ### Impact
 
-Support for weak SSH cryptographic algorithms increases the risk of cryptographic downgrade attacks and reduces the overall security posture of remote administrative services. Attackers capable of intercepting or manipulating SSH negotiation traffic may attempt to force weaker algorithms during session establishment, potentially weakening confidentiality and integrity protections. Additionally, use of deprecated algorithms may violate modern security hardening standards and enterprise cryptographic compliance requirements.
+Expired SSL/TLS certificates weaken the trust relationship between clients and the affected service. Attackers may exploit expired or improperly maintained certificates to facilitate spoofing, interception, or man-in-the-middle style attacks, particularly where users ignore browser or client certificate warnings. Additionally, expired certificates indicate poor certificate lifecycle management and may result in reduced trustworthiness of administrative or application services exposed by the environment.
 
 ### Steps to Reproduce
 
-1. Run SSH algorithm enumeration against the target system:
+1. Run SSL enumeration against the target host:
 
    ```bash
-   nmap -Pn --script ssh2-enum-algos -p22 <ip>
+   nmap -Pn -sV --script ssl-cert -p443 <ip>
    ```
 
-2. Review the returned SSH algorithm list.
+2. Observe the certificate validity dates returned by the service.
 
-3. Observe deprecated algorithms such as:
+3. Verify that the certificate expiration date has passed.
 
-   ```text id="v7h3cs"
-   diffie-hellman-group1-sha1
-   hmac-md5
-   hmac-sha1
+4. Alternatively:
+
+   ```bash
+   openssl s_client -connect <ip>:443
    ```
 
-4. Confirm that weak algorithms are supported by the SSH service.
+5. Review the certificate validity period.
 
 ### Resolution
 
-* Disable deprecated SSH key exchange algorithms.
-* Remove support for SHA1- and MD5-based MAC algorithms.
-* Enforce modern cryptographic standards such as:
-
-  * `curve25519-sha256`
-  * `ecdh-sha2-*`
-  * `chacha20-poly1305`
-  * SHA2-based MAC algorithms
-* Periodically review SSH hardening baselines against current security recommendations.
-* Restrict SSH access to trusted administrative hosts.
+* Replace the expired SSL/TLS certificate with a valid trusted certificate.
+* Implement certificate lifecycle monitoring and automated renewal processes.
+* Periodically review externally exposed certificates for expiration and trust status.
+* Remove deprecated or unused HTTPS services where operationally unnecessary.
 
 ### Evidence
 
 Use screenshots showing:
 
-* Output of:
+* Nmap `ssl-cert` output
+* Certificate validity dates
+* Expiration timestamp
 
-  ```bash
-  nmap --script ssh2-enum-algos -p22 <ip>
-  ```
+Important evidence:
 
-* Visible weak algorithms such as:
+```text id="8fjlwm"
+ssl-cert: Subject: commonName=nstm95035nap.eng.wintel.ubseng.net
+Not valid before: 2019-03-23T19:07:29
+Not valid after: 2021-03-22T19:07:29
+```
 
-  ```text id="vaz3j0"
-  diffie-hellman-group1-sha1
-  diffie-hellman-group14-sha1
-  hmac-md5
-  hmac-sha1
-  ```
-
-* Screenshot title suggestion:
-  **“SSH Enumeration Showing Weak Key Exchange and MAC Algorithms”**
+Suggested screenshot title:
+**“Expired SSL/TLS Certificate on HTTPS Service”**
