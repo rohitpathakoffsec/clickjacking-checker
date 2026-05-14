@@ -40,6 +40,8 @@
 ### Description
 
 Multiple Windows servers exposed **Microsoft HTTPAPI/2.0** services on management-related ports such as **47001** and **5985**. The service responses returned **404 Not Found** pages with the `Microsoft-HTTPAPI/2.0` server header, confirming that internal HTTP services are reachable and fingerprintable from the testing network. In several cases, these HTTPAPI services were part of broader internal management or relay surfaces, increasing reconnaissance value for an attacker.
+An attacker can use the disclosed HTTPAPI service details to perform targeted reconnaissance against the environment. Exposure of internal service information such as Microsoft HTTPAPI usage, management ports, and backend infrastructure fingerprints assists attackers in identifying underlying technologies, management interfaces, and potential attack paths for further exploitation. Although no direct compromise was identified during testing, such information disclosure reduces the attack complexity for subsequent attacks including service enumeration, vulnerability mapping, and targeted exploitation attempts against exposed management services.
+
 
 ### Steps to Reproduce
 
