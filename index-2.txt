@@ -1,96 +1,107 @@
-## 6) Expired SSL/TLS Certificate
+## 7) Writable Log Files Accessible to Authenticated Users
 
 ### Proper Title
 
-**Expired SSL/TLS Certificate Identified on HTTPS Service**
+**Writable Log Files Accessible to Authenticated Users**
 
 ### Active CWE
 
-**CWE-295: Improper Certificate Validation**
+**CWE-732: Incorrect Permission Assignment for Critical Resource**
 
 ### STRIDE Mapping
 
-**4 - Information Disclosure**
-**1 - Spoofing Identity**
+**2 - Tampering with Data**
+**3 - Repudiation**
+**6 - Elevation of Privilege**
 
 ### CVSS v3.1
 
-**CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:N = 6.5 (Medium)**
+**CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:H/A:L = 6.6 (Medium)**
 
 ### Why this score
 
-* **AV:N** – remotely exploitable over the network
-* **AC:L** – no special attack complexity required
-* **PR:N** – no authentication required
-* **UI:N** – users may unknowingly trust invalid certificates
-* **S:U** – impact remains within same scope
-* **C:L** – expired certificates weaken trust validation and confidentiality assurance
-* **I:L** – increases risk of spoofing or interception attacks
-* **A:N** – no direct availability impact observed
+* **AV:L** – attacker requires local authenticated access
+* **AC:L** – exploitation is straightforward
+* **PR:L** – low-privileged authenticated user sufficient
+* **UI:N** – no user interaction required
+* **S:U** – impact limited to same system scope
+* **C:L** – log data may expose operational details
+* **I:H** – attackers can alter or delete audit evidence
+* **A:L** – corruption of logs may impact monitoring and troubleshooting
 
 ### Affected Asset
 
-* **nstm95035nap.eng.wintel.ubseng.net**
-
-  * Port: `443/tcp`
+* **nec47b36020log1**
+* Additional systems where writable logs under non-protected directories were identified
 
 ### Description
 
-The HTTPS service exposed an expired SSL/TLS certificate during service enumeration. The certificate validity period observed during testing was:
+During authenticated testing, multiple log files stored outside protected Windows system directories were identified with write permissions assigned to low-privileged authenticated users. Access control review showed that authenticated users possessed Modify (`M`) permissions over several log files and directories.
 
-```text id="8byj8n"
-Not valid before: 2019-03-23T19:07:29
-Not valid after: 2021-03-22T19:07:29
+Testing confirmed that log files located outside standard protected paths such as:
+
+* `C:\Windows`
+* `C:\Program Files`
+* `C:\ProgramData`
+
+could be modified by a normal authenticated user account.
+
+Example permission observed:
+
+```text id="7m4d1c"
+NT AUTHORITY\Authenticated Users:(I)(M)
 ```
-
-The service continued to present the expired certificate to connecting clients.
 
 ### Impact
 
-Expired SSL/TLS certificates weaken the trust relationship between clients and the affected service. Attackers may exploit expired or improperly maintained certificates to facilitate spoofing, interception, or man-in-the-middle style attacks, particularly where users ignore browser or client certificate warnings. Additionally, expired certificates indicate poor certificate lifecycle management and may result in reduced trustworthiness of administrative or application services exposed by the environment.
+Improper permissions on log files allow authenticated users to alter, tamper with, or delete audit records, reducing the integrity and reliability of security monitoring mechanisms. An attacker with local access may manipulate logs to conceal malicious activity, remove forensic evidence, or inject misleading records, impacting incident investigation and non-repudiation controls. Writable logs may additionally facilitate privilege escalation or abuse if consumed by privileged processes or monitoring services.
 
 ### Steps to Reproduce
 
-1. Run SSL enumeration against the target host:
+1. Enumerate log files:
 
-   ```bash
-   nmap -Pn -sV --script ssl-cert -p443 <ip>
+   ```cmd
+   dir C:\*.log /s /b
    ```
 
-2. Observe the certificate validity dates returned by the service.
+2. Identify accessible log files outside protected system directories.
 
-3. Verify that the certificate expiration date has passed.
+3. Review permissions:
 
-4. Alternatively:
-
-   ```bash
-   openssl s_client -connect <ip>:443
+   ```cmd
+   icacls "<log_file_path>"
    ```
 
-5. Review the certificate validity period.
+4. Observe Modify permissions assigned to authenticated users:
+
+   ```text id="bcv73x"
+   NT AUTHORITY\Authenticated Users:(I)(M)
+   ```
+
+5. Open the identified log file and confirm write access by modifying its contents.
 
 ### Resolution
 
-* Replace the expired SSL/TLS certificate with a valid trusted certificate.
-* Implement certificate lifecycle monitoring and automated renewal processes.
-* Periodically review externally exposed certificates for expiration and trust status.
-* Remove deprecated or unused HTTPS services where operationally unnecessary.
+* Restrict write permissions on log files to administrative and required service accounts only.
+* Remove Modify permissions assigned to low-privileged or authenticated users.
+* Store security and application logs in protected directories with hardened ACLs.
+* Enable centralized logging and integrity monitoring for audit records.
+* Periodically audit filesystem permissions for sensitive operational files.
 
 ### Evidence
 
 Use screenshots showing:
 
-* Nmap `ssl-cert` output
-* Certificate validity dates
-* Expiration timestamp
+1. Log file enumeration results
+2. `icacls` output showing:
 
-Important evidence:
+   ```text id="e64h21"
+   NT AUTHORITY\Authenticated Users:(I)(M)
+   ```
+3. Opened log file with editable contents
+4. Successful modification of the log file
 
-```text id="8fjlwm"
-ssl-cert: Subject: commonName=nstm95035nap.eng.wintel.ubseng.net
-Not valid before: 2019-03-23T19:07:29
-Not valid after: 2021-03-22T19:07:29
-```
+Suggested screenshot titles:
 
-Suggested screenshot title:
-**“Expired SSL/TLS Certificate on HTTPS Service”**
+* **“Writable Permissions Assigned to Authenticated Users on Log Files”**
+* **“Authenticated User Able to Modify Application Log File”**
