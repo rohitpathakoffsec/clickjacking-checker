@@ -1,8 +1,8 @@
-## 2) Information Disclosure via RDP
+## 3) Microsoft IIS Server Version Disclosure
 
 ### Proper Title
 
-**Information Disclosure via Remote Desktop Protocol (RDP) Service Enumeration**
+**Microsoft IIS Server Version Disclosure**
 
 ### Active CWE
 
@@ -18,95 +18,81 @@
 
 ### Why this score
 
-* **AV:N** – accessible remotely over the network
-* **AC:L** – simple enumeration only
+* **AV:N** – remotely accessible over the network
+* **AC:L** – simple request reveals the information
 * **PR:N** – no authentication required
-* **UI:N** – no user interaction required
-* **S:U** – impact limited to same system scope
-* **C:L** – internal domain, hostname, OS version, and infrastructure details disclosed
-* **I:N / A:N** – no integrity or availability impact observed
+* **UI:N** – no user interaction needed
+* **S:U** – impact limited to same system
+* **C:L** – server technology and exact version details disclosed
+* **I:N / A:N** – no direct integrity or availability impact observed
 
 ### Affected Asset
 
-* **nec47b36020mgr**
-* **nec47b36020bck1**
-* **nec47b36020log1**
-* **nec47b36020tcp1**
 * **nec47b36020web2**
 * **nec47b36020web3**
-* **nec47b36020cn01**
-* **nstm95035nap**
 
 ### Description
 
-Multiple servers exposed Remote Desktop Protocol (RDP) services externally on port **3389**. During enumeration, the RDP service disclosed internal infrastructure information including:
+The web servers exposed the exact Microsoft IIS version through HTTP response headers. During testing, the `Server` header disclosed the backend web server as:
 
-* Internal Active Directory domain names
-* NetBIOS names
-* Internal DNS hostnames
-* Computer names
-* Windows build/version details
-* TLS certificate information
+```text id="5bm0qs"
+Microsoft-IIS/10.0
+```
 
-This information was retrievable without successful authentication through standard RDP enumeration techniques.
+The information was accessible without authentication and could be obtained through standard HTTP requests.
 
 ### Impact
 
-The exposed RDP metadata allows attackers to gather valuable reconnaissance information about the internal environment and domain structure. Disclosure of internal hostnames, Active Directory domain details, naming conventions, and operating system versions can assist attackers in infrastructure mapping, phishing preparation, password spraying campaigns, and targeting of known vulnerabilities associated with identified Windows versions or services. The information may also help attackers identify high-value systems and trust relationships within the environment, thereby reducing the effort required for further attacks.
+Disclosure of the exact IIS server version assists attackers in fingerprinting the target environment and mapping known vulnerabilities associated with the identified software version. Attackers can leverage this information to perform targeted exploitation attempts, vulnerability scanning, or identify applicable public exploits against the disclosed server technology. Although version disclosure alone does not directly compromise the server, it significantly improves the accuracy and efficiency of further attacks against the infrastructure.
 
 ### Steps to Reproduce
 
-1. Perform an Nmap scan against the target host:
+1. Send an HTTP/HTTPS request to the affected web server:
 
    ```bash
-   nmap -Pn -sC -sV -p3389 <ip>
+   curl -I http://<ip>
    ```
 
-2. Observe the `rdp-ntlm-info` output returned by the service.
+   or
 
-3. Verify disclosure of:
+   ```bash
+   curl -k -I https://<ip>
+   ```
 
-   * `Target_Name`
-   * `NetBIOS_Domain_Name`
-   * `DNS_Domain_Name`
-   * `DNS_Computer_Name`
-   * `Product_Version`
-   * TLS certificate subject details
+2. Observe the HTTP response headers.
 
-4. Confirm that the information is accessible without valid authentication.
+3. Verify that the `Server` header discloses:
+
+   ```text id="0omvq4"
+   Server: Microsoft-IIS/10.0
+   ```
+
+4. Confirm that the information is accessible without authentication.
 
 ### Resolution
 
-* Restrict RDP exposure using firewall rules or VPN-only access.
-* Limit RDP access to trusted administrative networks.
-* Implement Network Level Authentication (NLA) and hardened access controls.
-* Avoid unnecessary disclosure of internal infrastructure details through externally reachable services where possible.
-* Monitor and restrict unauthorized RDP enumeration attempts.
+* Remove or suppress unnecessary HTTP response headers disclosing backend technology details.
+* Configure IIS to hide or customize the `Server` header.
+* Implement reverse proxy or WAF rules to minimize technology fingerprinting exposure.
+* Regularly patch and harden IIS services against publicly known vulnerabilities.
 
 ### Evidence
 
 Use screenshots showing:
 
-* Nmap scan results for port `3389`
-* `rdp-ntlm-info` output
-* Internal domain and hostname disclosure
-* Windows version disclosure
-* SSL certificate details returned by RDP
+* Browser response headers
+* Burp Suite response
+* Curl output
+* Nmap service enumeration output
 
-Example evidence areas:
+Important evidence to capture:
 
-```text
-3389/tcp open ms-wbt-server Microsoft Terminal Services
-
-rdp-ntlm-info:
-Target_Name: UBSCLOUD-ENG
-NetBIOS_Domain_Name: UBSCLOUD-ENG
-DNS_Computer_Name: nec47b36020web2.UBSCLOUD-ENG.msad.ubseng.net
-Product_Version: 10.0.20348
+```text id="jlwmre"
+_http-server-header: Microsoft-IIS/10.0
 ```
 
-And:
+or:
 
-```text
-ssl-cert: Subject: commonName=nec47b36020web2.UBSCLOUD-ENG.msad.ubseng.net
+```text id="zjdhm0"
+Server: Microsoft-IIS/10.0
 ```
