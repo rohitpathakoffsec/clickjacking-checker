@@ -1,12 +1,12 @@
-## 1) HTTPAPI Internal Server Disclosure
+## 2) Information Disclosure via RDP
 
 ### Proper Title
 
-**HTTPAPI Internal Server Disclosure**
+**Information Disclosure via Remote Desktop Protocol (RDP) Service Enumeration**
 
 ### Active CWE
 
-**CWE-200: Exposure of Sensitive Information to an Unauthorized Actor**
+**CWE-497: Exposure of System Data to an Unauthorized Control Sphere**
 
 ### STRIDE Mapping
 
@@ -18,80 +18,95 @@
 
 ### Why this score
 
-* **AV:N** – the information is exposed over the network
-* **AC:L** – no special conditions are needed beyond reaching the service
-* **PR:N** – no authentication was required
-* **UI:N** – no user interaction is needed
-* **S:U** – impact stays within the same scope
-* **C:L** – the service reveals internal server fingerprints, service headers, hostnames, and that an internal HTTPAPI service is present
-* **I:N / A:N** – no integrity or availability impact was demonstrated
+* **AV:N** – accessible remotely over the network
+* **AC:L** – simple enumeration only
+* **PR:N** – no authentication required
+* **UI:N** – no user interaction required
+* **S:U** – impact limited to same system scope
+* **C:L** – internal domain, hostname, OS version, and infrastructure details disclosed
+* **I:N / A:N** – no integrity or availability impact observed
 
 ### Affected Asset
 
-* **nec47b36020mgr** (`10.191.57.78`)
-* **nec47b36020bck1** (`10.191.57.83`)
-* **nec47b36020log1** (`10.191.57.84`)
-* **nec47b36020tcp1** (`10.191.57.82`)
-* **nec47b36020web2** (`10.191.57.76`)
-* **nec47b36020web3** (`10.191.57.77`)
-* **nec47b36020cn01** (`10.125.72.230`)
-* **nstm95035nap** (`10.211.201.124`)
+* **nec47b36020mgr**
+* **nec47b36020bck1**
+* **nec47b36020log1**
+* **nec47b36020tcp1**
+* **nec47b36020web2**
+* **nec47b36020web3**
+* **nec47b36020cn01**
+* **nstm95035nap**
 
 ### Description
 
-Multiple Windows servers exposed **Microsoft HTTPAPI/2.0** services on management-related ports such as **47001** and **5985**. The service responses returned **404 Not Found** pages with the `Microsoft-HTTPAPI/2.0` server header, confirming that internal HTTP services are reachable and fingerprintable from the testing network. In several cases, these HTTPAPI services were part of broader internal management or relay surfaces, increasing reconnaissance value for an attacker.
-An attacker can use the disclosed HTTPAPI service details to perform targeted reconnaissance against the environment. Exposure of internal service information such as Microsoft HTTPAPI usage, management ports, and backend infrastructure fingerprints assists attackers in identifying underlying technologies, management interfaces, and potential attack paths for further exploitation. Although no direct compromise was identified during testing, such information disclosure reduces the attack complexity for subsequent attacks including service enumeration, vulnerability mapping, and targeted exploitation attempts against exposed management services.
+Multiple servers exposed Remote Desktop Protocol (RDP) services externally on port **3389**. During enumeration, the RDP service disclosed internal infrastructure information including:
 
+* Internal Active Directory domain names
+* NetBIOS names
+* Internal DNS hostnames
+* Computer names
+* Windows build/version details
+* TLS certificate information
+
+This information was retrievable without successful authentication through standard RDP enumeration techniques.
+
+### Impact
+
+The exposed RDP metadata allows attackers to gather valuable reconnaissance information about the internal environment and domain structure. Disclosure of internal hostnames, Active Directory domain details, naming conventions, and operating system versions can assist attackers in infrastructure mapping, phishing preparation, password spraying campaigns, and targeting of known vulnerabilities associated with identified Windows versions or services. The information may also help attackers identify high-value systems and trust relationships within the environment, thereby reducing the effort required for further attacks.
 
 ### Steps to Reproduce
 
-1. From Kali, run Nmap or curl against the exposed HTTPAPI ports on any affected server.
-2. Example:
+1. Perform an Nmap scan against the target host:
 
    ```bash
-   nmap -Pn -sC -sV -p47001,5985 <ip>
+   nmap -Pn -sC -sV -p3389 <ip>
    ```
 
-   or
+2. Observe the `rdp-ntlm-info` output returned by the service.
 
-   ```bash
-   curl -v http://<ip>:47001/
-   curl -v http://<ip>:5985/
-   ```
-3. Observe that the service responds with:
+3. Verify disclosure of:
 
-   * `Microsoft-HTTPAPI/2.0`
-   * `HTTP/1.1 404 Not Found` or similar response
-4. Confirm that the service is exposed without requiring prior authentication.
+   * `Target_Name`
+   * `NetBIOS_Domain_Name`
+   * `DNS_Domain_Name`
+   * `DNS_Computer_Name`
+   * `Product_Version`
+   * TLS certificate subject details
+
+4. Confirm that the information is accessible without valid authentication.
 
 ### Resolution
 
-* Restrict access to internal HTTPAPI/management services using network segmentation and firewall rules.
-* Expose WinRM and internal HTTPAPI endpoints only to authorized administrative hosts.
-* Remove or reduce unnecessary service banner disclosure where possible.
-* Ensure management interfaces are not reachable from untrusted network segments.
+* Restrict RDP exposure using firewall rules or VPN-only access.
+* Limit RDP access to trusted administrative networks.
+* Implement Network Level Authentication (NLA) and hardened access controls.
+* Avoid unnecessary disclosure of internal infrastructure details through externally reachable services where possible.
+* Monitor and restrict unauthorized RDP enumeration attempts.
 
 ### Evidence
 
-Use a screenshot showing:
+Use screenshots showing:
 
-* The **Nmap output** or **curl output**
-* The **port number** (`47001` or `5985`)
-* The **`Microsoft-HTTPAPI/2.0`** header
-* The **404 Not Found** response
+* Nmap scan results for port `3389`
+* `rdp-ntlm-info` output
+* Internal domain and hostname disclosure
+* Windows version disclosure
+* SSL certificate details returned by RDP
 
-A strong evidence screenshot would be the terminal output from:
-
-```bash
-curl -v http://<ip>:47001/
-```
-
-or the Nmap output showing:
+Example evidence areas:
 
 ```text
-47001/tcp open http Microsoft HTTPAPI httpd 2.0
-_http-server-header: Microsoft-HTTPAPI/2.0
-_http-title: Not Found
+3389/tcp open ms-wbt-server Microsoft Terminal Services
+
+rdp-ntlm-info:
+Target_Name: UBSCLOUD-ENG
+NetBIOS_Domain_Name: UBSCLOUD-ENG
+DNS_Computer_Name: nec47b36020web2.UBSCLOUD-ENG.msad.ubseng.net
+Product_Version: 10.0.20348
 ```
 
-Send the second finding and I will format it the same way.
+And:
+
+```text
+ssl-cert: Subject: commonName=nec47b36020web2.UBSCLOUD-ENG.msad.ubseng.net
+```
