@@ -1,107 +1,21 @@
-## 7) Writable Log Files Accessible to Authenticated Users
+The SSH service exposed by the affected systems supports multiple legacy and cryptographically weak key exchange (KEX) algorithms identified through SSH algorithm enumeration. The following deprecated KEX algorithms were observed:
 
-### Proper Title
+Weak / Deprecated KEX Algorithms
+diffie-hellman-group1-sha1
+diffie-hellman-group14-sha1
+diffie-hellman-group-exchange-sha1
 
-**Writable Log Files Accessible to Authenticated Users**
+These algorithms rely on SHA-1 based cryptographic primitives and legacy Diffie-Hellman groups which are considered weak against modern cryptographic attacks. Support for deprecated KEX mechanisms increases the risk of downgrade attacks during SSH session establishment, potentially allowing attackers to negotiate weaker cryptographic protections.
 
-### Active CWE
+Deprecated Message Authentication Code (MAC) Algorithms Identified
 
-**CWE-732: Incorrect Permission Assignment for Critical Resource**
+The SSH service also supports multiple weak MAC algorithms used for packet integrity verification.
 
-### STRIDE Mapping
+Weak / Deprecated MAC Algorithms
+hmac-sha1
+hmac-md5
+hmac-sha1-96
+hmac-md5-96
+hmac-ripemd160-96
 
-**2 - Tampering with Data**
-**3 - Repudiation**
-**6 - Elevation of Privilege**
-
-### CVSS v3.1
-
-**CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:H/A:L = 6.6 (Medium)**
-
-### Why this score
-
-* **AV:L** – attacker requires local authenticated access
-* **AC:L** – exploitation is straightforward
-* **PR:L** – low-privileged authenticated user sufficient
-* **UI:N** – no user interaction required
-* **S:U** – impact limited to same system scope
-* **C:L** – log data may expose operational details
-* **I:H** – attackers can alter or delete audit evidence
-* **A:L** – corruption of logs may impact monitoring and troubleshooting
-
-### Affected Asset
-
-* **nec47b36020log1**
-* Additional systems where writable logs under non-protected directories were identified
-
-### Description
-
-During authenticated testing, multiple log files stored outside protected Windows system directories were identified with write permissions assigned to low-privileged authenticated users. Access control review showed that authenticated users possessed Modify (`M`) permissions over several log files and directories.
-
-Testing confirmed that log files located outside standard protected paths such as:
-
-* `C:\Windows`
-* `C:\Program Files`
-* `C:\ProgramData`
-
-could be modified by a normal authenticated user account.
-
-Example permission observed:
-
-```text id="7m4d1c"
-NT AUTHORITY\Authenticated Users:(I)(M)
-```
-
-### Impact
-
-Improper permissions on log files allow authenticated users to alter, tamper with, or delete audit records, reducing the integrity and reliability of security monitoring mechanisms. An attacker with local access may manipulate logs to conceal malicious activity, remove forensic evidence, or inject misleading records, impacting incident investigation and non-repudiation controls. Writable logs may additionally facilitate privilege escalation or abuse if consumed by privileged processes or monitoring services.
-
-### Steps to Reproduce
-
-1. Enumerate log files:
-
-   ```cmd
-   dir C:\*.log /s /b
-   ```
-
-2. Identify accessible log files outside protected system directories.
-
-3. Review permissions:
-
-   ```cmd
-   icacls "<log_file_path>"
-   ```
-
-4. Observe Modify permissions assigned to authenticated users:
-
-   ```text id="bcv73x"
-   NT AUTHORITY\Authenticated Users:(I)(M)
-   ```
-
-5. Open the identified log file and confirm write access by modifying its contents.
-
-### Resolution
-
-* Restrict write permissions on log files to administrative and required service accounts only.
-* Remove Modify permissions assigned to low-privileged or authenticated users.
-* Store security and application logs in protected directories with hardened ACLs.
-* Enable centralized logging and integrity monitoring for audit records.
-* Periodically audit filesystem permissions for sensitive operational files.
-
-### Evidence
-
-Use screenshots showing:
-
-1. Log file enumeration results
-2. `icacls` output showing:
-
-   ```text id="e64h21"
-   NT AUTHORITY\Authenticated Users:(I)(M)
-   ```
-3. Opened log file with editable contents
-4. Successful modification of the log file
-
-Suggested screenshot titles:
-
-* **“Writable Permissions Assigned to Authenticated Users on Log Files”**
-* **“Authenticated User Able to Modify Application Log File”**
+These MAC algorithms are based on outdated hashing mechanisms such as MD5 and SHA-1 which are no longer recommended for secure cryptographic operations. Continued support for these algorithms weakens integrity assurance and may expose SSH communications to cryptographic downgrade or collision-related attacks.
