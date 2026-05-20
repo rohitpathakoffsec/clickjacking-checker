@@ -1,21 +1,2 @@
-The SSH service exposed by the affected systems supports multiple legacy and cryptographically weak key exchange (KEX) algorithms identified through SSH algorithm enumeration. The following deprecated KEX algorithms were observed:
 
-Weak / Deprecated KEX Algorithms
-diffie-hellman-group1-sha1
-diffie-hellman-group14-sha1
-diffie-hellman-group-exchange-sha1
-
-These algorithms rely on SHA-1 based cryptographic primitives and legacy Diffie-Hellman groups which are considered weak against modern cryptographic attacks. Support for deprecated KEX mechanisms increases the risk of downgrade attacks during SSH session establishment, potentially allowing attackers to negotiate weaker cryptographic protections.
-
-Deprecated Message Authentication Code (MAC) Algorithms Identified
-
-The SSH service also supports multiple weak MAC algorithms used for packet integrity verification.
-
-Weak / Deprecated MAC Algorithms
-hmac-sha1
-hmac-md5
-hmac-sha1-96
-hmac-md5-96
-hmac-ripemd160-96
-
-These MAC algorithms are based on outdated hashing mechanisms such as MD5 and SHA-1 which are no longer recommended for secure cryptographic operations. Continued support for these algorithms weakens integrity assurance and may expose SSH communications to cryptographic downgrade or collision-related attacks.
+Infrastructure and administrative services exposed within the NGIX environment were reviewed to identify insecure configurations or vulnerable components that could facilitate privilege escalation. Testing included assessment of exposed services, privilege boundaries, service permissions, and accessible administrative interfaces. No evidence of insecure privileged execution, weak service permissions, or exploitable configurations leading to privilege escalation was identified during the assessment.
