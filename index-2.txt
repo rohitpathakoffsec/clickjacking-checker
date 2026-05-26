@@ -1,2 +1,28 @@
 
-Infrastructure and administrative services exposed within the NGIX environment were reviewed to identify insecure configurations or vulnerable components that could facilitate privilege escalation. Testing included assessment of exposed services, privilege boundaries, service permissions, and accessible administrative interfaces. No evidence of insecure privileged execution, weak service permissions, or exploitable configurations leading to privilege escalation was identified during the assessment.
+I am planning to develop an AI-assisted pentest reporting tool to reduce manual effort and improve reporting consistency.
+
+Planned workflow/features:
+
+• Direct integration with SharePoint-hosted Excel database to fetch real-time updated findings without manually downloading the file daily.
+
+• User can enter vulnerability details in natural language; exact finding title match will not be required.
+
+• AI-based similarity search will suggest relevant finding titles from the database, and the user can select the correct one.
+
+• Once selected, the tool will automatically populate all associated finding details from the database in the required report/table structure.
+
+• If no matching finding exists internally, the tool will perform an internet-based lookup and generate the required vulnerability details using trusted security references.
+
+• Output will follow a predefined reporting format/template to maintain consistency across pentest reports.
+
+Expected benefits:
+• Faster report generation
+• Reduced manual copy-paste work
+• Standardized reporting quality
+• Centralized reusable finding repository
+
+Future enhancements:
+• CWE/CVSS auto-mapping
+• AI-generated remediation/impact
+• Scan output parsing (Burp/Nmap/etc.)
+• Word/Excel export support
