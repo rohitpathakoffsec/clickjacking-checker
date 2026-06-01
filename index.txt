@@ -1,120 +1,68 @@
 
-If you’re using an AI music platform, it’s best to give it both the lyrics and a detailed production prompt.
+AI Music Prompt
 
-Song Prompt
+Happy upbeat acoustic pop song about the joy of morning coffee. Fresh, positive, feel-good energy with catchy hooks and sing-along chorus. Warm vocals, acoustic guitar, light piano, soft drums, claps, and cheerful harmonies. Coffee-shop vibe, sunny morning atmosphere, uplifting and refreshing mood. Tempo 115 BPM. Modern indie-pop production with a memorable chorus that feels energetic and motivating.
 
-Create a happy, uplifting, feel-good acoustic pop song about the joy of drinking coffee in the morning. The mood should be fresh, warm, positive, and energetic. Imagine sunshine through a window, the aroma of freshly brewed coffee, and the excitement of starting a new day.
-
-Style: Acoustic Pop / Indie Pop
-
-Tempo: 110–120 BPM
-
-Vocals: Warm male or female lead with bright, friendly delivery
-
-Instruments: Acoustic guitar, light piano, soft percussion, subtle bass, cheerful claps, and light background harmonies
-
-Vibe: Optimistic, refreshing, cozy, morning motivation, coffee-shop atmosphere
-
-Chorus should be catchy and memorable, with a sing-along feel. The song should make listeners smile and feel energized, like the first sip of coffee on a beautiful morning.
-
-Lyrics
+Lyrics (Under 213 Words)
 
 [Verse 1]
 
-Morning light is painting gold across my room today
+Morning sun is shining through my window bright,
 
-Birds are singing little songs, the clouds just drift away
+Fresh brew on the table, everything feels right.
 
-I stretch my arms and smile wide, the world’s awake with me
+First sip, little smile, washing dreams away,
 
-Then I smell that coffee brewing, sweet as it can be
+Coffee got me dancing at the start of the day.
 
 [Pre-Chorus]
 
-Every little worry starts to fade away
+Every drop of magic, every little spark,
 
-Like sunshine in a cup, you’re brightening my day
+Turning on the sunshine, lighting up my heart.
 
 [Chorus]
 
-Coffee in my hand, sunshine in my eyes
+Coffee in my cup, feeling so alive,
 
-Feeling like I’m floating underneath these open skies
+Got that good energy, ready for the ride.
 
-Every single sip is like a brand-new melody
+Oh-oh-oh, let the good vibes flow,
 
-Coffee, you and me, that’s all I really need
+Oh-oh-oh, everywhere I go.
 
-Oh-oh-oh, what a beautiful day
+Coffee in my cup, happiness on repeat,
 
-Oh-oh-oh, let the good vibes stay
-
-Coffee in my hand, and a smile that’s free
-
-Coffee, you and me
+Making every morning feel so sweet.
 
 [Verse 2]
 
-Sidewalks full of stories and the city starts to glow
+Busy streets are waking, people passing by,
 
-People chasing dreams and every street begins to flow
+But I’m moving lighter with a smile so high.
 
-I take another sip and feel the energy arrive
+Aroma in the air, confidence to spare,
 
-Like a spark of happiness that makes the whole day shine
-
-[Pre-Chorus]
-
-Every little moment feels a little brighter now
-
-The world keeps turning gently and I’m dancing with the crowd
-
-[Chorus]
-
-Coffee in my hand, sunshine in my eyes
-
-Feeling like I’m floating underneath these open skies
-
-Every single sip is like a brand-new melody
-
-Coffee, you and me, that’s all I really need
-
-Oh-oh-oh, what a beautiful day
-
-Oh-oh-oh, let the good vibes stay
-
-Coffee in my hand, and a smile that’s free
-
-Coffee, you and me
+Coffee keeps me floating like I’m walking on air.
 
 [Bridge]
 
-Here’s to the mornings and the dreams we chase
+One more sip and suddenly the world feels new,
 
-Here’s to the laughter and the little breaks
-
-One small cup can turn the gray to gold
-
-A simple kind of magic never getting old
+Golden little moments in everything I do.
 
 [Final Chorus]
 
-Coffee in my hand, sunshine in my eyes
+Coffee in my cup, feeling so alive,
 
-Feeling like I’m floating underneath these open skies
+Got that good energy, ready for the ride.
 
-Every single sip is like a brand-new melody
+Oh-oh-oh, let the good vibes flow,
 
-Coffee, you and me, that’s all I really need
+Oh-oh-oh, everywhere I go.
 
-Oh-oh-oh, what a beautiful day
+Coffee in my cup, happiness on repeat,
 
-Oh-oh-oh, let the good vibes stay
+Making every morning feel so sweet.
 
-Coffee in my hand, and a smile that’s free
-
-Coffee, you and me
-
-Coffee, you and me
-
-This style works particularly well in Suno/Udio and tends to generate a bright, catchy “morning coffee anthem” vibe.
+This version is roughly 150–160 words, comfortably below the 213-word limit.
