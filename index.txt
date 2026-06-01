@@ -1,22 +1,120 @@
-Description
-This finding is a retest of #PT-DTT-0213#VA11. Considering the presence of multiple reflected XSS scenarios within the SSO ecosystem, the rating has been increased from Informational to Minor according to CVSS calculation.
-Scenario 1 – Direct Reflected XSS in ISSO
-The ISSO application was found vulnerable to reflected Cross-Site Scripting (XSS) through the Referer and User-Agent HTTP headers. Reflected XSS occurs when an application includes user supplied input within the server response without applying appropriate sanitization or output encoding.
-During testing, malicious JavaScript payloads injected into HTTP headers were reflected within the application response inside executable JavaScript context, resulting in successful client-side script execution.
-The identified issue requires an authenticated user session and successful delivery of a crafted request to the victim user. No straightforward unauthenticated exploitation scenario was identified during testing; however, successful exploitation may still be possible through crafted requests and user interaction.
-Example Payload:
-Scenario 2 – Reflected XSS via SwisKey POST Preservation Mechanism During SSO Flow
-A separate reflected XSS scenario was identified involving the SwisKey application and the SSO POST preservation workflow.
-During testing it was observed that the SwisKey application processes user supplied input within HTTP POST parameters without sufficient validation or sanitization. The entire POST body is preserved using the SMPostPreserve mechanism during the SSO authentication workflow.
-In this process:
-User supplied POST data is encoded
-Transported through the SSO workflow
-Decoded by downstream components
-Reused without sufficient sanitization after decoding
-As a result, malicious input originating from SwisKey parameters may propagate through the SSO workflow and ultimately execute within the user’s browser when rendered by downstream ISSO-related components.
-It should be noted that direct usage of the SMPostPreserve parameter was not observed within standalone ISSO requests during testing. Therefore, exploitation of this scenario requires an upstream application leveraging the POST preservation mechanism (such as SwisKey) rather than direct interaction with ISSO alone.
-The response includes user controlled input that is reflected back to the client without sufficient sanitization, allowing attackers to inject arbitrary JavaScript or HTML content into the victim’s browser session.
-Example Payload:
-name=test&level=private&PENTEST">alert('REFLECTEDXSS')=520&viewId=1067675&folded=false
-Description
-PENTEST">alert('REFLECTEDXSS')=520&viewId=1067675&folded=false
+
+If you’re using an AI music platform, it’s best to give it both the lyrics and a detailed production prompt.
+
+Song Prompt
+
+Create a happy, uplifting, feel-good acoustic pop song about the joy of drinking coffee in the morning. The mood should be fresh, warm, positive, and energetic. Imagine sunshine through a window, the aroma of freshly brewed coffee, and the excitement of starting a new day.
+
+Style: Acoustic Pop / Indie Pop
+
+Tempo: 110–120 BPM
+
+Vocals: Warm male or female lead with bright, friendly delivery
+
+Instruments: Acoustic guitar, light piano, soft percussion, subtle bass, cheerful claps, and light background harmonies
+
+Vibe: Optimistic, refreshing, cozy, morning motivation, coffee-shop atmosphere
+
+Chorus should be catchy and memorable, with a sing-along feel. The song should make listeners smile and feel energized, like the first sip of coffee on a beautiful morning.
+
+Lyrics
+
+[Verse 1]
+
+Morning light is painting gold across my room today
+
+Birds are singing little songs, the clouds just drift away
+
+I stretch my arms and smile wide, the world’s awake with me
+
+Then I smell that coffee brewing, sweet as it can be
+
+[Pre-Chorus]
+
+Every little worry starts to fade away
+
+Like sunshine in a cup, you’re brightening my day
+
+[Chorus]
+
+Coffee in my hand, sunshine in my eyes
+
+Feeling like I’m floating underneath these open skies
+
+Every single sip is like a brand-new melody
+
+Coffee, you and me, that’s all I really need
+
+Oh-oh-oh, what a beautiful day
+
+Oh-oh-oh, let the good vibes stay
+
+Coffee in my hand, and a smile that’s free
+
+Coffee, you and me
+
+[Verse 2]
+
+Sidewalks full of stories and the city starts to glow
+
+People chasing dreams and every street begins to flow
+
+I take another sip and feel the energy arrive
+
+Like a spark of happiness that makes the whole day shine
+
+[Pre-Chorus]
+
+Every little moment feels a little brighter now
+
+The world keeps turning gently and I’m dancing with the crowd
+
+[Chorus]
+
+Coffee in my hand, sunshine in my eyes
+
+Feeling like I’m floating underneath these open skies
+
+Every single sip is like a brand-new melody
+
+Coffee, you and me, that’s all I really need
+
+Oh-oh-oh, what a beautiful day
+
+Oh-oh-oh, let the good vibes stay
+
+Coffee in my hand, and a smile that’s free
+
+Coffee, you and me
+
+[Bridge]
+
+Here’s to the mornings and the dreams we chase
+
+Here’s to the laughter and the little breaks
+
+One small cup can turn the gray to gold
+
+A simple kind of magic never getting old
+
+[Final Chorus]
+
+Coffee in my hand, sunshine in my eyes
+
+Feeling like I’m floating underneath these open skies
+
+Every single sip is like a brand-new melody
+
+Coffee, you and me, that’s all I really need
+
+Oh-oh-oh, what a beautiful day
+
+Oh-oh-oh, let the good vibes stay
+
+Coffee in my hand, and a smile that’s free
+
+Coffee, you and me
+
+Coffee, you and me
+
+This style works particularly well in Suno/Udio and tends to generate a bright, catchy “morning coffee anthem” vibe.
