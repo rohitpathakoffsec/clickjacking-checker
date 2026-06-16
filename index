@@ -1,1 +1,237 @@
+I would be careful with the severity.
 
+Based on the evidence you’ve shown, I would not go above Informational or Low because:
+
+* Rate limiting is present and functioning.
+* The endpoint successfully blocks excessive requests.
+* No authentication bypass occurred.
+* No denial of service was demonstrated.
+* No sensitive information was disclosed.
+* The issue is primarily incorrect error handling and use of an improper HTTP status code.
+
+⸻
+
+Finding Title
+
+Improper Error Handling for Rate Limit Enforcement
+
+Alternative:
+
+Rate Limit Exceedance Returns HTTP 500 Instead of HTTP 429
+
+⸻
+
+Severity
+
+Recommended
+
+Low
+
+CVSS v3.1
+
+CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L
+
+Base Score: 5.3 (Low)
+
+Why:
+
+* Network exploitable
+* Easy to trigger
+* No confidentiality impact
+* No integrity impact
+* Minor availability impact
+* Error handling weakness
+
+If your client typically treats these as informational observations, you can lower it to Informational.
+
+⸻
+
+Description
+
+The OAuth token generation endpoint implements request throttling to prevent excessive token generation. However, when the configured rate limit threshold is exceeded, the application returns an HTTP 500 Internal Server Error response rather than the expected HTTP 429 Too Many Requests response.
+
+Returning a server error code for a rate limiting event may lead to inaccurate monitoring, incorrect client-side error handling, and confusion regarding the actual cause of the failure. Industry-standard implementations typically return HTTP 429 along with appropriate throttling information such as Retry-After headers.
+
+⸻
+
+Observation
+
+During testing, approximately 1,000 token generation requests were submitted to the OAuth token endpoint within a one-minute period.
+
+The application successfully issued access tokens for the initial requests. Once the rate limit threshold was exceeded, subsequent requests were rejected with the following response:
+
+HTTP/2 500 Internal Server Error
+
+Response body:
+
+{
+  "status": "ERROR",
+  "code": "1000900",
+  "message": "Unexpected Error: RateLimitExceeded - Rate limit is exceeded"
+}
+
+The response indicates that rate limiting controls are active; however, the application incorrectly classifies the condition as an internal server error rather than a throttling event.
+
+Testing further showed that:
+
+* Requests were successfully processed up to approximately 999 requests.
+* Requests exceeding the threshold returned HTTP 500 responses.
+* The rate limit appeared to reset after approximately one minute.
+* The behavior was observed across both read-only and read-write OAuth client credentials, suggesting the limit is enforced at a shared layer (e.g., API gateway, subscription key, or source IP).
+
+⸻
+
+Steps to Reproduce
+
+Step 1
+
+Obtain valid OAuth credentials and subscription key.
+
+⸻
+
+Step 2
+
+Send a large number of requests to:
+
+POST /party-authentication-api/v1/token/grant
+
+using valid parameters:
+
+client_id=<valid>
+client_secret=<valid>
+scope=?
+
+⸻
+
+Step 3
+
+Generate approximately 1,000 requests within one minute using Burp Suite Intruder.
+
+⸻
+
+Step 4
+
+Observe that initial requests return:
+
+HTTP/2 200 OK
+
+with valid access tokens.
+
+⸻
+
+Step 5
+
+Observe that requests beyond the threshold return:
+
+HTTP/2 500 Internal Server Error
+
+with the following message:
+
+{
+  "message": "Unexpected Error: RateLimitExceeded - Rate limit is exceeded"
+}
+
+⸻
+
+Step 6
+
+Wait approximately one minute and repeat the test.
+
+The endpoint resumes normal operation until the threshold is reached again.
+
+⸻
+
+Impact
+
+Although rate limiting controls are present and functioning, returning HTTP 500 instead of HTTP 429:
+
+* Misrepresents the nature of the failure.
+* May generate false-positive server error alerts.
+* Complicates client-side error handling.
+* Does not provide consumers with standard throttling guidance.
+* May obscure monitoring and operational visibility during high-volume request events.
+
+No authentication bypass or rate limit bypass was identified during testing.
+
+⸻
+
+Remediation
+
+Implement standards-compliant throttling responses for rate limiting events.
+
+When the configured threshold is exceeded:
+
+Return:
+
+HTTP/1.1 429 Too Many Requests
+
+Include:
+
+Retry-After: <seconds>
+
+Optionally include:
+
+X-RateLimit-Limit
+X-RateLimit-Remaining
+X-RateLimit-Reset
+
+Additionally:
+
+* Avoid classifying expected throttling behavior as an internal server error.
+* Ensure monitoring distinguishes between application failures and intentional rate limiting events.
+
+⸻
+
+POC Screenshots to Preserve
+
+Keep these screenshots:
+
+Screenshot 1 (Most Important)
+
+Burp Intruder results showing:
+
+Request 995 → 200
+Request 996 → 200
+Request 997 → 200
+Request 998 → 200
+Request 999 → 200
+Request 1000 → 500
+Request 1001 → 500
+
+This demonstrates the threshold.
+
+⸻
+
+Screenshot 2
+
+The selected request showing:
+
+HTTP/2 500 Internal Server Error
+
+and:
+
+{
+  "message":"Unexpected Error: RateLimitExceeded - Rate limit is exceeded"
+}
+
+This is the strongest evidence.
+
+⸻
+
+Screenshot 3
+
+A follow-up test after ~1 minute showing:
+
+HTTP/2 200 OK
+
+again.
+
+This demonstrates that throttling resets and confirms the behavior is rate-limit related rather than a persistent outage.
+
+⸻
+
+Screenshot 4 (Optional)
+
+A screenshot showing that the same behavior occurs when switching from read-only credentials to read-write credentials immediately after the threshold is reached.
+
+This strengthens the observation regarding the enforcement scope.
