@@ -1,83 +1,45 @@
-I would be careful with the severity.
-
-Based on the evidence you’ve shown, I would not go above Informational or Low because:
-
-* Rate limiting is present and functioning.
-* The endpoint successfully blocks excessive requests.
-* No authentication bypass occurred.
-* No denial of service was demonstrated.
-* No sensitive information was disclosed.
-* The issue is primarily incorrect error handling and use of an improper HTTP status code.
-
-⸻
+I would keep this as an Informational observation. Here’s a report-ready version.
 
 Finding Title
 
-Improper Error Handling for Rate Limit Enforcement
-
-Alternative:
-
-Rate Limit Exceedance Returns HTTP 500 Instead of HTTP 429
-
-⸻
+Technology Version Disclosure via HTTP Response Headers
 
 Severity
 
-Recommended
-
-Low
+Informational
 
 CVSS v3.1
 
-CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L
+CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N
 
-Base Score: 5.3 (Low)
+Base Score: 3.7 (Low)
 
-Why:
-
-* Network exploitable
-* Easy to trigger
-* No confidentiality impact
-* No integrity impact
-* Minor availability impact
-* Error handling weakness
-
-If your client typically treats these as informational observations, you can lower it to Informational.
+If your organization uses Informational findings, I would classify it as Informational rather than Low.
 
 ⸻
 
 Description
 
-The OAuth token generation endpoint implements request throttling to prevent excessive token generation. However, when the configured rate limit threshold is exceeded, the application returns an HTTP 500 Internal Server Error response rather than the expected HTTP 429 Too Many Requests response.
+The application discloses implementation technology details through HTTP response headers. Specifically, the X-Powered-By header reveals the underlying web application technology and exact software version being used by the application.
 
-Returning a server error code for a rate limiting event may lead to inaccurate monitoring, incorrect client-side error handling, and confusion regarding the actual cause of the failure. Industry-standard implementations typically return HTTP 429 along with appropriate throttling information such as Retry-After headers.
+Technology and version disclosure may assist an attacker during the reconnaissance phase by providing information about the underlying software stack. Such information can be used to identify publicly known vulnerabilities, target technology-specific attacks, or improve the accuracy of further exploitation attempts.
+
+While this issue does not directly expose sensitive data or result in unauthorized access, minimizing unnecessary information disclosure is considered a security best practice and helps reduce the application’s attack surface.
 
 ⸻
 
 Observation
 
-During testing, approximately 1,000 token generation requests were submitted to the OAuth token endpoint within a one-minute period.
+During testing, the application responded with the following HTTP header:
 
-The application successfully issued access tokens for the initial requests. Once the rate limit threshold was exceeded, subsequent requests were rejected with the following response:
+X-Powered-By: PHP/8.3.24
 
-HTTP/2 500 Internal Server Error
+The header discloses:
 
-Response body:
+* Underlying technology: PHP
+* Exact software version: 8.3.24
 
-{
-  "status": "ERROR",
-  "code": "1000900",
-  "message": "Unexpected Error: RateLimitExceeded - Rate limit is exceeded"
-}
-
-The response indicates that rate limiting controls are active; however, the application incorrectly classifies the condition as an internal server error rather than a throttling event.
-
-Testing further showed that:
-
-* Requests were successfully processed up to approximately 999 requests.
-* Requests exceeding the threshold returned HTTP 500 responses.
-* The rate limit appeared to reset after approximately one minute.
-* The behavior was observed across both read-only and read-write OAuth client credentials, suggesting the limit is enforced at a shared layer (e.g., API gateway, subscription key, or source IP).
+This information is exposed to any user interacting with the application and can be retrieved without authentication.
 
 ⸻
 
@@ -85,153 +47,88 @@ Steps to Reproduce
 
 Step 1
 
-Obtain valid OAuth credentials and subscription key.
+Send a request to any accessible API endpoint.
 
-⸻
+Example:
+
+GET /<endpoint> HTTP/2
+Host: api.stage.seacoastbank.com
 
 Step 2
 
-Send a large number of requests to:
-
-POST /party-authentication-api/v1/token/grant
-
-using valid parameters:
-
-client_id=<valid>
-client_secret=<valid>
-scope=?
-
-⸻
+Inspect the HTTP response headers.
 
 Step 3
 
-Generate approximately 1,000 requests within one minute using Burp Suite Intruder.
+Observe the following header in the response:
 
-⸻
+X-Powered-By: PHP/8.3.24
 
 Step 4
 
-Observe that initial requests return:
-
-HTTP/2 200 OK
-
-with valid access tokens.
-
-⸻
-
-Step 5
-
-Observe that requests beyond the threshold return:
-
-HTTP/2 500 Internal Server Error
-
-with the following message:
-
-{
-  "message": "Unexpected Error: RateLimitExceeded - Rate limit is exceeded"
-}
-
-⸻
-
-Step 6
-
-Wait approximately one minute and repeat the test.
-
-The endpoint resumes normal operation until the threshold is reached again.
+Confirm that the header consistently appears across API responses.
 
 ⸻
 
 Impact
 
-Although rate limiting controls are present and functioning, returning HTTP 500 instead of HTTP 429:
+An attacker can identify the underlying technology stack and software version used by the application.
 
-* Misrepresents the nature of the failure.
-* May generate false-positive server error alerts.
-* Complicates client-side error handling.
-* Does not provide consumers with standard throttling guidance.
-* May obscure monitoring and operational visibility during high-volume request events.
+Potential risks include:
 
-No authentication bypass or rate limit bypass was identified during testing.
+* Facilitating reconnaissance activities.
+* Assisting attackers in identifying version-specific vulnerabilities.
+* Increasing the effectiveness of targeted attacks against the disclosed technology stack.
+* Revealing internal implementation details that are not required for application functionality.
+
+No direct compromise of confidentiality, integrity, or availability was identified during testing.
 
 ⸻
 
 Remediation
 
-Implement standards-compliant throttling responses for rate limiting events.
+Remove unnecessary technology disclosure headers from HTTP responses.
 
-When the configured threshold is exceeded:
+Specifically:
 
-Return:
+* Disable or suppress the X-Powered-By header.
+* Configure the application server, reverse proxy, or web server to avoid exposing technology and version information.
+* Ensure error messages and response headers do not reveal implementation details.
 
-HTTP/1.1 429 Too Many Requests
+Example:
 
-Include:
+X-Powered-By: <removed>
 
-Retry-After: <seconds>
+or
 
-Optionally include:
+X-Powered-By: Application
 
-X-RateLimit-Limit
-X-RateLimit-Remaining
-X-RateLimit-Reset
-
-Additionally:
-
-* Avoid classifying expected throttling behavior as an internal server error.
-* Ensure monitoring distinguishes between application failures and intentional rate limiting events.
+where disclosure of the exact technology and version is avoided.
 
 ⸻
 
-POC Screenshots to Preserve
+Proof of Concept / Evidence
 
-Keep these screenshots:
+Screenshot 1 (Primary Evidence)
 
-Screenshot 1 (Most Important)
-
-Burp Intruder results showing:
-
-Request 995 → 200
-Request 996 → 200
-Request 997 → 200
-Request 998 → 200
-Request 999 → 200
-Request 1000 → 500
-Request 1001 → 500
-
-This demonstrates the threshold.
-
-⸻
-
-Screenshot 2
-
-The selected request showing:
-
-HTTP/2 500 Internal Server Error
-
-and:
-
-{
-  "message":"Unexpected Error: RateLimitExceeded - Rate limit is exceeded"
-}
-
-This is the strongest evidence.
-
-⸻
-
-Screenshot 3
-
-A follow-up test after ~1 minute showing:
+Capture the response headers showing:
 
 HTTP/2 200 OK
+...
+X-Powered-By: PHP/8.3.24
+...
 
-again.
+Screenshot 2 (Optional)
 
-This demonstrates that throttling resets and confirms the behavior is rate-limit related rather than a persistent outage.
+Capture the same header appearing on a second API endpoint to demonstrate consistent disclosure across the application.
 
 ⸻
 
-Screenshot 4 (Optional)
+References
 
-A screenshot showing that the same behavior occurs when switching from read-only credentials to read-write credentials immediately after the threshold is reached.
+* CWE-200: Information Exposure
+* CWE-497: Exposure of System Information to an Unauthorized Control Sphere
+* OWASP Secure Headers Project
+* OWASP ASVS 14.4 – Error Handling and Logging / Information Disclosure Controls
 
-This strengthens the observation regarding the enforcement scope.
+Note: If later during testing you identify a vulnerable PHP framework, exposed debug functionality, stack traces, or PHP-specific weaknesses, this observation can be linked as supporting evidence to a more impactful finding. Currently, it should remain an informational hardening issue.
