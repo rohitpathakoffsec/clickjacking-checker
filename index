@@ -1,4 +1,5 @@
 <# 
+WorkstationEvidenceCollector.ps1
 Windows evidence collection for vulnerability validation.
 #>
 
