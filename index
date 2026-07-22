@@ -1,134 +1,118 @@
-I would keep this as an Informational observation. Here’s a report-ready version.
+<# 
+Windows evidence collection for vulnerability validation.
+#>
 
-Finding Title
+$ErrorActionPreference = "SilentlyContinue"
 
-Technology Version Disclosure via HTTP Response Headers
+$ts = Get-Date -Format "yyyyMMdd_HHmmss"
+$hostName = $env:COMPUTERNAME
+$outDir = Join-Path $PSScriptRoot "Evidence_$($hostName)_$ts"
+New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
-Severity
+$txt = Join-Path $outDir "Evidence.txt"
+$csv = Join-Path $outDir "InstalledSoftware.csv"
 
-Informational
+function Section($n){
+    Add-Content $txt ""
+    Add-Content $txt ("="*70)
+    Add-Content $txt $n
+    Add-Content $txt ("="*70)
+}
 
-CVSS v3.1
+function W($o){
+    if($null -ne $o){$o | Out-String | Add-Content $txt}
+}
 
-CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:N/A:N
+Section "Host Information"
+W (Get-ComputerInfo | Select-Object WindowsProductName,WindowsVersion,OsBuildNumber,OsArchitecture,BiosManufacturer,BiosVersion,CsManufacturer,CsModel)
 
-Base Score: 3.7 (Low)
+Section "Operating System"
+W (Get-CimInstance Win32_OperatingSystem | Select Caption,Version,BuildNumber,LastBootUpTime)
 
-If your organization uses Informational findings, I would classify it as Informational rather than Low.
+Section "BIOS"
+W (Get-CimInstance Win32_BIOS | Select Manufacturer,SMBIOSBIOSVersion,ReleaseDate,SerialNumber)
 
-⸻
+Section "Installed Hotfixes"
+W (Get-HotFix | Sort InstalledOn)
 
-Description
+Section ".NET Framework"
+$ndp='HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP'
+Get-ChildItem $ndp -Recurse |
+Get-ItemProperty |
+Where-Object {$_.Version} |
+Select PSChildName,Version,Release |
+Format-Table -AutoSize | Out-String | Add-Content $txt
 
-The application discloses implementation technology details through HTTP response headers. Specifically, the X-Powered-By header reveals the underlying web application technology and exact software version being used by the application.
+Section ".NET Runtime"
+if(Get-Command dotnet -ErrorAction SilentlyContinue){
+    & dotnet --info | Out-String | Add-Content $txt
+    & dotnet --list-runtimes | Out-String | Add-Content $txt
+    & dotnet --list-sdks | Out-String | Add-Content $txt
+}else{
+    Add-Content $txt "dotnet not found."
+}
 
-Technology and version disclosure may assist an attacker during the reconnaissance phase by providing information about the underlying software stack. Such information can be used to identify publicly known vulnerabilities, target technology-specific attacks, or improve the accuracy of further exploitation attempts.
+Section "Java"
+if(Get-Command java -ErrorAction SilentlyContinue){
+    cmd /c "java -version 2>&1" | Out-String | Add-Content $txt
+}else{
+    Add-Content $txt "Java not found."
+}
 
-While this issue does not directly expose sensitive data or result in unauthorized access, minimizing unnecessary information disclosure is considered a security best practice and helps reduce the application’s attack surface.
+Section "OpenSSL"
+if(Get-Command openssl -ErrorAction SilentlyContinue){
+    & openssl version -a | Out-String | Add-Content $txt
+}else{
+    Add-Content $txt "OpenSSL not found."
+}
 
-⸻
+Section "Browsers"
+$browserPaths=@(
+"$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+"$env:ProgramFiles(x86)\Google\Chrome\Application\chrome.exe",
+"$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
+"$env:ProgramFiles(x86)\Microsoft\Edge\Application\msedge.exe",
+"$env:ProgramFiles\Chromium\Application\chrome.exe",
+"$env:ProgramFiles(x86)\Chromium\Application\chrome.exe"
+)
+foreach($b in $browserPaths){
+    if(Test-Path $b){
+        $v=(Get-Item $b).VersionInfo.ProductVersion
+        Add-Content $txt "$b : $v"
+    }
+}
 
-Observation
+Section "Environment Variables"
+Get-ChildItem Env: | Sort Name | Format-Table -AutoSize | Out-String | Add-Content $txt
 
-During testing, the application responded with the following HTTP header:
+Section "Running Services"
+Get-Service | Sort DisplayName | Select DisplayName,Status,StartType |
+Format-Table -AutoSize | Out-String | Add-Content $txt
 
-X-Powered-By: PHP/8.3.24
+Section "Installed Software"
 
-The header discloses:
+$keys=@(
+"HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+"HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+)
 
-* Underlying technology: PHP
-* Exact software version: 8.3.24
+$apps=foreach($k in $keys){
+Get-ItemProperty $k |
+Where-Object {$_.DisplayName} |
+Select-Object DisplayName,DisplayVersion,Publisher,InstallDate
+}
 
-This information is exposed to any user interacting with the application and can be retrieved without authentication.
+$apps | Sort-Object DisplayName -Unique | Export-Csv $csv -NoTypeInformation
+$apps | Sort-Object DisplayName -Unique | Format-Table -AutoSize | Out-String | Add-Content $txt
 
-⸻
+Section "Interesting Products"
+$patterns='OpenSSL|Chrome|Chromium|Edge|Office|Excel|Word|Visual Studio|\.NET|Java|VMware|Forescout|Splunk|Oracle|Apache|Log4j|Tomcat|Node|Python|Git'
+$apps | Where-Object {$_.DisplayName -match $patterns} |
+Sort DisplayName |
+Format-Table -AutoSize | Out-String | Add-Content $txt
 
-Steps to Reproduce
-
-Step 1
-
-Send a request to any accessible API endpoint.
-
-Example:
-
-GET /<endpoint> HTTP/2
-Host: api.stage.seacoastbank.com
-
-Step 2
-
-Inspect the HTTP response headers.
-
-Step 3
-
-Observe the following header in the response:
-
-X-Powered-By: PHP/8.3.24
-
-Step 4
-
-Confirm that the header consistently appears across API responses.
-
-⸻
-
-Impact
-
-An attacker can identify the underlying technology stack and software version used by the application.
-
-Potential risks include:
-
-* Facilitating reconnaissance activities.
-* Assisting attackers in identifying version-specific vulnerabilities.
-* Increasing the effectiveness of targeted attacks against the disclosed technology stack.
-* Revealing internal implementation details that are not required for application functionality.
-
-No direct compromise of confidentiality, integrity, or availability was identified during testing.
-
-⸻
-
-Remediation
-
-Remove unnecessary technology disclosure headers from HTTP responses.
-
-Specifically:
-
-* Disable or suppress the X-Powered-By header.
-* Configure the application server, reverse proxy, or web server to avoid exposing technology and version information.
-* Ensure error messages and response headers do not reveal implementation details.
-
-Example:
-
-X-Powered-By: <removed>
-
-or
-
-X-Powered-By: Application
-
-where disclosure of the exact technology and version is avoided.
-
-⸻
-
-Proof of Concept / Evidence
-
-Screenshot 1 (Primary Evidence)
-
-Capture the response headers showing:
-
-HTTP/2 200 OK
-...
-X-Powered-By: PHP/8.3.24
-...
-
-Screenshot 2 (Optional)
-
-Capture the same header appearing on a second API endpoint to demonstrate consistent disclosure across the application.
-
-⸻
-
-References
-
-* CWE-200: Information Exposure
-* CWE-497: Exposure of System Information to an Unauthorized Control Sphere
-* OWASP Secure Headers Project
-* OWASP ASVS 14.4 – Error Handling and Logging / Information Disclosure Controls
-
-Note: If later during testing you identify a vulnerable PHP framework, exposed debug functionality, stack traces, or PHP-specific weaknesses, this observation can be linked as supporting evidence to a more impactful finding. Currently, it should remain an informational hardening issue.
+Write-Host ""
+Write-Host "Evidence collection complete."
+Write-Host "Folder: $outDir"
+Write-Host "TXT: $txt"
+Write-Host "CSV: $csv"
