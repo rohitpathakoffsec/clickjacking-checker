@@ -3,7 +3,7 @@ WorkstationEvidenceCollector.ps1
 Windows evidence collection for vulnerability validation.
 #>
 
-
+Get-ChildItem -Path C:\ -Filter "log4j-core-*.jar" -Recurse -ErrorAction SilentlyContinue | Select FullName, Name
 
 $cs=Get-CimInstance Win32_ComputerSystem;$bios=Get-CimInstance Win32_BIOS;$mei=Get-CimInstance Win32_PnPSignedDriver | Where-Object {$_.DeviceName -match "Management Engine|MEI|AMT"};[PSCustomObject]@{HostName=$env:COMPUTERNAME;Manufacturer=$cs.Manufacturer;Model=$cs.Model;BIOSVersion=$bios.SMBIOSBIOSVersion;BIOSReleaseDate=$bios.ReleaseDate;IntelME_AMT_Device=($mei.DeviceName -join ", ");DriverVersion=($mei.DriverVersion -join ", ");DriverManufacturer=($mei.Manufacturer -join ", ")}
 
