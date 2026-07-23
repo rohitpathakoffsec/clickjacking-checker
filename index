@@ -2,7 +2,16 @@
 WorkstationEvidenceCollector.ps1
 Windows evidence collection for vulnerability validation.
 #>
-$cv = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"; $ci = Get-ComputerInfo; [PSCustomObject]@{HostName=$env:COMPUTERNAME; OSName="$($ci.WindowsProductName) $($cv.DisplayVersion)"; OSVersion="$($cv.CurrentMajorVersionNumber).$($cv.CurrentMinorVersionNumber).$($cv.CurrentBuild).$($cv.UBR)"}
+
+(Get-Item "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe").VersionInfo.ProductVersion
+(Get-Item "C:\Program Files\Microsoft\Edge\Application\msedge.exe").VersionInfo.ProductVersion
+msedge --version
+(Get-Item "C:\Program Files\Google\Chrome\Application\chrome.exe").VersionInfo.ProductVersion
+
+
+
+
+
 $ErrorActionPreference = "SilentlyContinue"
 
 $ts = Get-Date -Format "yyyyMMdd_HHmmss"
