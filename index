@@ -3,10 +3,10 @@ WorkstationEvidenceCollector.ps1
 Windows evidence collection for vulnerability validation.
 #>
 
-(Get-Item "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe").VersionInfo.ProductVersion
-(Get-Item "C:\Program Files\Microsoft\Edge\Application\msedge.exe").VersionInfo.ProductVersion
-msedge --version
-(Get-Item "C:\Program Files\Google\Chrome\Application\chrome.exe").VersionInfo.ProductVersion
+
+
+$cs=Get-CimInstance Win32_ComputerSystem;$bios=Get-CimInstance Win32_BIOS;$mei=Get-CimInstance Win32_PnPSignedDriver | Where-Object {$_.DeviceName -match "Management Engine|MEI|AMT"};[PSCustomObject]@{HostName=$env:COMPUTERNAME;Manufacturer=$cs.Manufacturer;Model=$cs.Model;BIOSVersion=$bios.SMBIOSBIOSVersion;BIOSReleaseDate=$bios.ReleaseDate;IntelME_AMT_Device=($mei.DeviceName -join ", ");DriverVersion=($mei.DriverVersion -join ", ");DriverManufacturer=($mei.Manufacturer -join ", ")}
+
 
 
 
