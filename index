@@ -4,7 +4,7 @@ Windows evidence collection for vulnerability validation.
 #>
 
 $cv = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"; [PSCustomObject]@{HostName=$env:COMPUTERNAME; OSName=$cv.ProductName; OSVersion="$($cv.CurrentMajorVersionNumber).$($cv.CurrentMinorVersionNumber).$($cv.CurrentBuild).$($cv.UBR)"}
-
+$cv = Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"; $ci = Get-ComputerInfo; [PSCustomObject]@{HostName=$env:COMPUTERNAME; OSName=$ci.WindowsProductName; OSVersion="$($cv.CurrentMajorVersionNumber).$($cv.CurrentMinorVersionNumber).$($cv.CurrentBuild).$($cv.UBR)"}
 $ErrorActionPreference = "SilentlyContinue"
 
 $ts = Get-Date -Format "yyyyMMdd_HHmmss"
