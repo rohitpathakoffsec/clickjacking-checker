@@ -1,1 +1,119 @@
-Get-ChildItem C:\ -Filter package.json -Recurse -ErrorAction SilentlyContinue | ForEach-Object { try { $j=Get-Content $_.FullName -Raw|ConvertFrom-Json; foreach($p in "react-server-dom-webpack","react-server-dom-parcel","react-server-dom-turbopack"){ if($j.dependencies.$p -or $j.devDependencies.$p){ [PSCustomObject]@{Path=$_.DirectoryName;Package=$p;Version=($j.dependencies.$p,$j.devDependencies.$p|Where-Object{$_})[0]} } } } catch{} }
+<# 
+Collect-Evidence.ps1
+Read-only Windows evidence collection for vulnerability validation created by VM11 Team (Rohit).
+#>
+
+$ErrorActionPreference = "SilentlyContinue"
+
+$ts = Get-Date -Format "yyyyMMdd_HHmmss"
+$hostName = $env:COMPUTERNAME
+$outDir = Join-Path $PSScriptRoot "Evidence_$($hostName)_$ts"
+New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+
+$txt = Join-Path $outDir "Evidence.txt"
+$csv = Join-Path $outDir "InstalledSoftware.csv"
+
+function Section($n){
+    Add-Content $txt ""
+    Add-Content $txt ("="*70)
+    Add-Content $txt $n
+    Add-Content $txt ("="*70)
+}
+
+function W($o){
+    if($null -ne $o){
+        $header="HostName : $hostName`r`n"
+        $content=$header+($o | Out-String)
+        Write-Host $content
+        Add-Content $txt $content
+    }
+}
+
+Section "Host Information"
+W (Get-ComputerInfo | Select-Object WindowsProductName,WindowsVersion,OsBuildNumber,OsArchitecture,BiosManufacturer,BiosVersion,CsManufacturer,CsModel)
+
+Section "Operating System"
+W (Get-CimInstance Win32_OperatingSystem | Select Caption,Version,BuildNumber,LastBootUpTime)
+
+Section "BIOS"
+W (Get-CimInstance Win32_BIOS | Select Manufacturer,SMBIOSBIOSVersion,ReleaseDate,SerialNumber)
+
+Section "Installed Hotfixes"
+W (Get-HotFix | Sort InstalledOn)
+
+Section ".NET Framework"
+$ndp='HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP'
+W (Get-ChildItem $ndp -Recurse | Get-ItemProperty | Where-Object {$_.Version} | Select PSChildName,Version,Release | Format-Table -AutoSize)
+
+Section ".NET Runtime"
+if(Get-Command dotnet -ErrorAction SilentlyContinue){
+    W (& dotnet --info)
+    W (& dotnet --list-runtimes)
+    W (& dotnet --list-sdks)
+}else{
+    Add-Content $txt "dotnet not found."
+}
+
+Section "Java"
+if(Get-Command java -ErrorAction SilentlyContinue){
+    W (cmd /c "java -version 2>&1")
+}else{
+    Add-Content $txt "Java not found."
+}
+
+Section "OpenSSL"
+if(Get-Command openssl -ErrorAction SilentlyContinue){
+    W (& openssl version -a)
+}else{
+    Add-Content $txt "OpenSSL not found."
+}
+
+Section "Browsers"
+$browserPaths=@(
+"$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
+"$env:ProgramFiles(x86)\Google\Chrome\Application\chrome.exe",
+"$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
+"$env:ProgramFiles(x86)\Microsoft\Edge\Application\msedge.exe",
+"$env:ProgramFiles\Chromium\Application\chrome.exe",
+"$env:ProgramFiles(x86)\Chromium\Application\chrome.exe"
+)
+foreach($b in $browserPaths){
+    if(Test-Path $b){
+        $v=(Get-Item $b).VersionInfo.ProductVersion
+        W "$b : $v"
+    }
+}
+
+Section "Environment Variables"
+W (Get-ChildItem Env: | Sort Name | Format-Table -AutoSize)
+
+Section "Running Services"
+W (Get-Service | Sort DisplayName | Select DisplayName,Status,StartType | Format-Table -AutoSize)
+
+Section "Installed Software"
+
+$keys=@(
+"HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
+"HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+)
+
+$apps=foreach($k in $keys){
+Get-ItemProperty $k |
+Where-Object {$_.DisplayName} |
+Select-Object DisplayName,DisplayVersion,Publisher,InstallDate
+}
+
+$apps | Sort-Object DisplayName -Unique | Export-Csv $csv -NoTypeInformation
+W ($apps | Sort-Object DisplayName -Unique | Format-Table -AutoSize)
+
+Section "Interesting Products"
+$patterns='OpenSSL|Chrome|Chromium|Edge|Office|Excel|Word|Visual Studio|\.NET|Java|VMware|Forescout|Splunk|Oracle|Apache|Log4j|Tomcat|Node|Python|Git'
+$apps | Where-Object {$_.DisplayName -match $patterns} |
+Sort DisplayName |
+W
+
+Write-Host ""
+Write-Host "Evidence collection complete."
+Write-Host "Folder: $outDir"
+Write-Host "TXT: $txt"
+Write-Host "CSV: $csv"
