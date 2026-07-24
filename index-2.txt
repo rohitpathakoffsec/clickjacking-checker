@@ -1,63 +1,48 @@
-<# 
-Collect-Evidence-Part2.ps1
-Read-only Windows evidence collection for vulnerability validation created by VM11 Team (Rohit).
-#>
+Here's a natural, professional script you can use during the meeting.
 
-$OutputRoot="C:\VM_Evidence"
-New-Item -ItemType Directory -Force -Path $OutputRoot|Out-Null
-$Txt=Join-Path $OutputRoot "Part2_Evidence.txt"
-$Csv=Join-Path $OutputRoot "Part2_Evidence.csv"
-Remove-Item $Txt,$Csv -ErrorAction SilentlyContinue
+---
 
-$Global:HostName=$env:COMPUTERNAME
+**Meeting Introduction**
 
-function Write-Section($Title){
-    $hdr="`r`n==================== $Title ====================`r`nHostName : $Global:HostName`r`n"
-    $hdr | Tee-Object -FilePath $Txt -Append
-    [pscustomobject]@{HostName=$Global:HostName;Section=$Title;Command="---";Output="---"} |
-        Export-Csv $Csv -Append -NoTypeInformation
-}
+"Hi everyone, thank you for joining.
 
-function Run-Command{
-    param($Section,$Command,$Script)
-    Write-Section $Section
-    Write-Host "`n[$Global:HostName] $Command`n" -ForegroundColor Cyan
-    $out=& $Script 2>&1 | Out-String
-    if([string]::IsNullOrWhiteSpace($out)){ $out="No Output"}
-    $out | Tee-Object -FilePath $Txt -Append
-    [pscustomobject]@{
-        HostName=$Global:HostName
-        Section=$Section
-        Command=$Command
-        Output=$out.Trim()
-    } | Export-Csv $Csv -Append -NoTypeInformation
-}
+The purpose of today's session is to validate a few vulnerabilities that were identified during the vulnerability scan. Rather than checking each finding individually, we've prepared two PowerShell scripts that collect the version and configuration information of the relevant software installed on each server. This helps us verify whether the reported vulnerabilities are actually applicable."
 
-Run-Command "Chromium" "Edge/Chrome Version" {
- $paths=@(
- "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
- "C:\Program Files\Microsoft\Edge\Application\msedge.exe",
- "C:\Program Files\Google\Chrome\Application\chrome.exe")
- foreach($p in $paths){if(Test-Path $p){"$env:COMPUTERNAME`t$p`t$((Get-Item $p).VersionInfo.ProductVersion)"}}
-}
+---
 
-Run-Command "Windows Server" "OS Information" {
- $cv=Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
- $ci=Get-ComputerInfo
- [pscustomobject]@{
- HostName=$env:COMPUTERNAME
- OSName="$($ci.WindowsProductName) $($cv.DisplayVersion)"
- OSVersion="$($cv.CurrentMajorVersionNumber).$($cv.CurrentMinorVersionNumber).$($cv.CurrentBuild).$($cv.UBR)"
- SystemType=$ci.CsSystemType}|Format-List
-}
+**Before Running the Scripts**
 
-Run-Command "BitLocker" "manage-bde -status" {manage-bde -status}
-Run-Command "BitLocker" "Get-BitLockerVolume" {Get-BitLockerVolume}
-Run-Command "cldflt" "driverquery | findstr cldflt" {cmd /c "driverquery | findstr /i cldflt"}
-Run-Command "cldflt" "sc query cldflt" {cmd /c "sc query cldflt"}
-Run-Command "OpenSSL" "openssl version" {openssl version}
-Run-Command ".NET" "dotnet --info" {dotnet --info}
+"I'd also like to assure you that these scripts are completely **read-only**. They do **not** make any changes to the server.
 
-Write-Host "`nCompleted."
-Write-Host "TXT : $Txt"
-Write-Host "CSV : $Csv"
+They only query information such as:
+
+* Operating System version
+* Installed software versions
+* Browser versions
+* .NET, OpenSSL, Office, Firmware, and a few other components related to the reported vulnerabilities
+
+The scripts do not install, uninstall, modify, restart, or stop any services or applications. They simply read the required information and generate an output for our validation."
+
+---
+
+**What You'll Ask the Client to Do**
+
+"I'll share the two PowerShell scripts with you. We'll go through the five servers one by one.
+
+Once you're logged into a server, please run the first script followed by the second script. We'll review the output together, save the results, and then move on to the next server."
+
+---
+
+**If They Ask Why This Is Needed**
+
+"The vulnerability scanner identifies potential vulnerabilities based on detected software and versions. Before reporting them as valid findings, we need to verify the actual versions and configurations present on the server. This evidence helps us confirm whether a vulnerability is truly applicable or a false positive."
+
+---
+
+**Before Starting**
+
+"If there are no questions, we can begin with the first server."
+
+This keeps the explanation simple, professional, and reassuring while making it clear that the scripts are only collecting version and configuration information for validation purposes.
+------------------
+The attached output files were generated directly from the listed host(s) using the evidence collection scripts provided by the VM11 team. The files are being shared in their original form and have not been modified or tampered with after execution. They accurately represent the output produced by the scripts on the respective host(s).
