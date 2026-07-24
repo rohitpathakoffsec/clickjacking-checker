@@ -1,2 +1,11 @@
 
 Get-ChildItem -Path C:\ -Filter "log4j-core-*.jar" -Recurse -ErrorAction SilentlyContinue | Select FullName, Name
+
+Get-ChildItem -Path C:\ -Filter "log4j-core-*.jar" -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
+    if ($_.Name -match "log4j-core-(.+)\.jar") {
+        [PSCustomObject]@{
+            Path=$_.FullName
+            Version=$matches[1]
+        }
+    }
+}
