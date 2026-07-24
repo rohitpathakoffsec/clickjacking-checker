@@ -1,21 +1,3 @@
+Get-ChildItem C:\ -Filter package.json -Recurse -ErrorAction SilentlyContinue | ForEach-Object { try { $j=Get-Content $_.FullName -Raw|ConvertFrom-Json; if($j.name -eq "axios"){ [PSCustomObject]@{Path=$_.DirectoryName; Version=$j.version} } elseif($j.dependencies.axios -or $j.devDependencies.axios){ [PSCustomObject]@{Path=$_.DirectoryName; Version=($j.dependencies.axios,$j.devDependencies.axios|Where-Object{$_})[0]} } } catch{} }
 
-Get-ChildItem -Path C:\ -Filter "log4j-core-*.jar" -Recurse -ErrorAction SilentlyContinue | Select FullName, Name
-
-Get-ChildItem -Path C:\ -Filter "log4j-core-*.jar" -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
-    if ($_.Name -match "log4j-core-(.+)\.jar") {
-        [PSCustomObject]@{
-            Path=$_.FullName
-            Version=$matches[1]
-        }
-    }
-}
-
-
-
-
-Get-ChildItem C:\ -Filter package.json -Recurse -ErrorAction SilentlyContinue | ForEach-Object { if (Select-String -Path $_.FullName -Pattern '"next"' -Quiet) { $dir=$_.DirectoryName; Write-Host "`nApplication Path: $dir"; Push-Location $dir; npm list next --depth=0 2>$null; Pop-Location } }
-
-
-
-Get-ChildItem C:\ -Filter package.json -Recurse -ErrorAction SilentlyContinue | ForEach-Object { try { $j = Get-Content $_.FullName -Raw | ConvertFrom-Json; if($j.name -eq "next"){ [PSCustomObject]@{Path=$_.DirectoryName; Version=$j.version} } } catch {} }
-
+Get-ChildItem C:\ -Filter package.json -Recurse -ErrorAction SilentlyContinue | ForEach-Object { try { $j=Get-Content $_.FullName -Raw|ConvertFrom-Json; if($j.name -eq "axios"){[PSCustomObject]@{Path=$_.DirectoryName;Version=$j.version}} elseif($j.dependencies.axios -or $j.devDependencies.axios){[PSCustomObject]@{Path=$_.DirectoryName;Version=($j.dependencies.axios,$j.devDependencies.axios|Where-Object{$_})[0]}} } catch{} } | Sort-Object Path -Unique
