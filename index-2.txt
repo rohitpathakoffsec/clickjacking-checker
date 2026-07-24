@@ -9,3 +9,8 @@ Get-ChildItem -Path C:\ -Filter "log4j-core-*.jar" -Recurse -ErrorAction Silentl
         }
     }
 }
+
+
+
+
+Get-ChildItem C:\ -Filter package.json -Recurse -ErrorAction SilentlyContinue | ForEach-Object { if (Select-String -Path $_.FullName -Pattern '"next"' -Quiet) { $dir=$_.DirectoryName; Write-Host "`nApplication Path: $dir"; Push-Location $dir; npm list next --depth=0 2>$null; Pop-Location } }
