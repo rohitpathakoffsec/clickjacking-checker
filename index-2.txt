@@ -1,119 +1,63 @@
 <# 
-Collect-Evidence.ps1
+Collect-Evidence-Part2.ps1
 Read-only Windows evidence collection for vulnerability validation created by VM11 Team (Rohit).
 #>
 
-$ErrorActionPreference = "SilentlyContinue"
+$OutputRoot="C:\VM_Evidence"
+New-Item -ItemType Directory -Force -Path $OutputRoot|Out-Null
+$Txt=Join-Path $OutputRoot "Part2_Evidence.txt"
+$Csv=Join-Path $OutputRoot "Part2_Evidence.csv"
+Remove-Item $Txt,$Csv -ErrorAction SilentlyContinue
 
-$ts = Get-Date -Format "yyyyMMdd_HHmmss"
-$hostName = $env:COMPUTERNAME
-$outDir = Join-Path $PSScriptRoot "Evidence_$($hostName)_$ts"
-New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+$Global:HostName=$env:COMPUTERNAME
 
-$txt = Join-Path $outDir "Evidence.txt"
-$csv = Join-Path $outDir "InstalledSoftware.csv"
-
-function Section($n){
-    Add-Content $txt ""
-    Add-Content $txt ("="*70)
-    Add-Content $txt $n
-    Add-Content $txt ("="*70)
+function Write-Section($Title){
+    $hdr="`r`n==================== $Title ====================`r`nHostName : $Global:HostName`r`n"
+    $hdr | Tee-Object -FilePath $Txt -Append
+    [pscustomobject]@{HostName=$Global:HostName;Section=$Title;Command="---";Output="---"} |
+        Export-Csv $Csv -Append -NoTypeInformation
 }
 
-function W($o){
-    if($null -ne $o){
-        $header="HostName : $hostName`r`n"
-        $content=$header+($o | Out-String)
-        Write-Host $content
-        Add-Content $txt $content
-    }
+function Run-Command{
+    param($Section,$Command,$Script)
+    Write-Section $Section
+    Write-Host "`n[$Global:HostName] $Command`n" -ForegroundColor Cyan
+    $out=& $Script 2>&1 | Out-String
+    if([string]::IsNullOrWhiteSpace($out)){ $out="No Output"}
+    $out | Tee-Object -FilePath $Txt -Append
+    [pscustomobject]@{
+        HostName=$Global:HostName
+        Section=$Section
+        Command=$Command
+        Output=$out.Trim()
+    } | Export-Csv $Csv -Append -NoTypeInformation
 }
 
-Section "Host Information"
-W (Get-ComputerInfo | Select-Object WindowsProductName,WindowsVersion,OsBuildNumber,OsArchitecture,BiosManufacturer,BiosVersion,CsManufacturer,CsModel)
-
-Section "Operating System"
-W (Get-CimInstance Win32_OperatingSystem | Select Caption,Version,BuildNumber,LastBootUpTime)
-
-Section "BIOS"
-W (Get-CimInstance Win32_BIOS | Select Manufacturer,SMBIOSBIOSVersion,ReleaseDate,SerialNumber)
-
-Section "Installed Hotfixes"
-W (Get-HotFix | Sort InstalledOn)
-
-Section ".NET Framework"
-$ndp='HKLM:\SOFTWARE\Microsoft\NET Framework Setup\NDP'
-W (Get-ChildItem $ndp -Recurse | Get-ItemProperty | Where-Object {$_.Version} | Select PSChildName,Version,Release | Format-Table -AutoSize)
-
-Section ".NET Runtime"
-if(Get-Command dotnet -ErrorAction SilentlyContinue){
-    W (& dotnet --info)
-    W (& dotnet --list-runtimes)
-    W (& dotnet --list-sdks)
-}else{
-    Add-Content $txt "dotnet not found."
+Run-Command "Chromium" "Edge/Chrome Version" {
+ $paths=@(
+ "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
+ "C:\Program Files\Microsoft\Edge\Application\msedge.exe",
+ "C:\Program Files\Google\Chrome\Application\chrome.exe")
+ foreach($p in $paths){if(Test-Path $p){"$env:COMPUTERNAME`t$p`t$((Get-Item $p).VersionInfo.ProductVersion)"}}
 }
 
-Section "Java"
-if(Get-Command java -ErrorAction SilentlyContinue){
-    W (cmd /c "java -version 2>&1")
-}else{
-    Add-Content $txt "Java not found."
+Run-Command "Windows Server" "OS Information" {
+ $cv=Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion"
+ $ci=Get-ComputerInfo
+ [pscustomobject]@{
+ HostName=$env:COMPUTERNAME
+ OSName="$($ci.WindowsProductName) $($cv.DisplayVersion)"
+ OSVersion="$($cv.CurrentMajorVersionNumber).$($cv.CurrentMinorVersionNumber).$($cv.CurrentBuild).$($cv.UBR)"
+ SystemType=$ci.CsSystemType}|Format-List
 }
 
-Section "OpenSSL"
-if(Get-Command openssl -ErrorAction SilentlyContinue){
-    W (& openssl version -a)
-}else{
-    Add-Content $txt "OpenSSL not found."
-}
+Run-Command "BitLocker" "manage-bde -status" {manage-bde -status}
+Run-Command "BitLocker" "Get-BitLockerVolume" {Get-BitLockerVolume}
+Run-Command "cldflt" "driverquery | findstr cldflt" {cmd /c "driverquery | findstr /i cldflt"}
+Run-Command "cldflt" "sc query cldflt" {cmd /c "sc query cldflt"}
+Run-Command "OpenSSL" "openssl version" {openssl version}
+Run-Command ".NET" "dotnet --info" {dotnet --info}
 
-Section "Browsers"
-$browserPaths=@(
-"$env:ProgramFiles\Google\Chrome\Application\chrome.exe",
-"$env:ProgramFiles(x86)\Google\Chrome\Application\chrome.exe",
-"$env:ProgramFiles\Microsoft\Edge\Application\msedge.exe",
-"$env:ProgramFiles(x86)\Microsoft\Edge\Application\msedge.exe",
-"$env:ProgramFiles\Chromium\Application\chrome.exe",
-"$env:ProgramFiles(x86)\Chromium\Application\chrome.exe"
-)
-foreach($b in $browserPaths){
-    if(Test-Path $b){
-        $v=(Get-Item $b).VersionInfo.ProductVersion
-        W "$b : $v"
-    }
-}
-
-Section "Environment Variables"
-W (Get-ChildItem Env: | Sort Name | Format-Table -AutoSize)
-
-Section "Running Services"
-W (Get-Service | Sort DisplayName | Select DisplayName,Status,StartType | Format-Table -AutoSize)
-
-Section "Installed Software"
-
-$keys=@(
-"HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*",
-"HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
-)
-
-$apps=foreach($k in $keys){
-Get-ItemProperty $k |
-Where-Object {$_.DisplayName} |
-Select-Object DisplayName,DisplayVersion,Publisher,InstallDate
-}
-
-$apps | Sort-Object DisplayName -Unique | Export-Csv $csv -NoTypeInformation
-W ($apps | Sort-Object DisplayName -Unique | Format-Table -AutoSize)
-
-Section "Interesting Products"
-$patterns='OpenSSL|Chrome|Chromium|Edge|Office|Excel|Word|Visual Studio|\.NET|Java|VMware|Forescout|Splunk|Oracle|Apache|Log4j|Tomcat|Node|Python|Git'
-$apps | Where-Object {$_.DisplayName -match $patterns} |
-Sort DisplayName |
-W
-
-Write-Host ""
-Write-Host "Evidence collection complete."
-Write-Host "Folder: $outDir"
-Write-Host "TXT: $txt"
-Write-Host "CSV: $csv"
+Write-Host "`nCompleted."
+Write-Host "TXT : $Txt"
+Write-Host "CSV : $Csv"
