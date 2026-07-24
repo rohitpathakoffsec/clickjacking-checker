@@ -1,3 +1,20 @@
+You can say it naturally like this:
+
+“Arido had mentioned yesterday that all five hosts are identical and that the findings should therefore be the same across all of them. I just wanted to confirm if that’s still correct.”
+
+If they reply “Yes”, you can continue with:
+
+“Thanks for confirming. I did notice that around 90% of the vulnerabilities are common across all five hosts. However, there are a few vulnerabilities in the scan report that are unique to specific hosts.”
+
+Then conclude with:
+
+“To validate those host-specific findings and ensure we have complete evidence for every system, we’ll still need to run these two scripts on each of the five hosts and collect the output from each one.”
+
+This comes across as collaborative rather than challenging their statement, while clearly explaining why you still need evidence from every host.
+
+
+
+
 Here's a natural, professional script you can use during the meeting.
 
 ---
