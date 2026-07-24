@@ -1,1 +1,1 @@
-Get-ItemProperty HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\*,HKLM:\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue | Where-Object {$_.DisplayName -match "Forescout|SecureConnector"} | Select DisplayName,DisplayVersion,InstallLocation
+Get-ChildItem C:\ -Filter "commons-text-*.jar" -Recurse -ErrorAction SilentlyContinue | ForEach-Object { if($_.Name -match "commons-text-(.+)\.jar"){ [PSCustomObject]@{Path=$_.FullName;Version=$matches[1]} } }
