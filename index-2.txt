@@ -1,5 +1,20 @@
 Since all 5 hosts have the same CVE (CVE-2026-50507) and CVE-2026-45586, and you’ve confirmed earlier that the hosts are identical, you can combine them into one report finding.
+----
 
+Here’s a more professional and detailed Description that starts with a generic overview and then explains both CVEs specifically.
+
+⸻
+
+Description
+
+During the vulnerability assessment, multiple local privilege escalation vulnerabilities were identified affecting Microsoft Windows components on the target systems. Successful exploitation of these vulnerabilities could allow an authenticated local attacker to obtain elevated privileges, bypass security controls, and execute actions with higher privileges than intended. This could lead to unauthorized access to sensitive data, modification of system configurations, or complete compromise of the affected host.
+
+The assessment identified the following vulnerabilities:
+
+* CVE-2026-50507 – Microsoft Windows BitLocker Protection Mechanism Vulnerability: This vulnerability exists due to weaknesses in BitLocker’s protection mechanisms and insufficient authentication for certain critical functions. An authenticated attacker with physical or local access may exploit this issue to bypass BitLocker security protections, potentially allowing unauthorized access to encrypted data and weakening the confidentiality and integrity of the system.
+* CVE-2026-45586 – Microsoft Windows Collaborative Translation Framework Link Resolution Vulnerability: This vulnerability is caused by improper link resolution before file access (link following) within the Windows Collaborative Translation Framework. An authenticated local attacker could exploit this flaw to perform unauthorized file operations and elevate privileges, resulting in the execution of actions with higher privileges than intended and compromising the security of the affected system.
+
+The identified vulnerabilities affect all assessed hosts running the same Windows build and should be remediated by applying the latest Microsoft security updates provided for the affected operating system.
 ⸻
 
 Finding Title
