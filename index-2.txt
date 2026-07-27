@@ -1,67 +1,127 @@
-(Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Office\ClickToRun\Configuration").VersionToReport
+Since all 5 hosts have the same CVE (CVE-2026-50507) and CVE-2026-45586, and you’ve confirmed earlier that the hosts are identical, you can combine them into one report finding.
 
-You can say it naturally like this:
+⸻
 
-“Arido had mentioned yesterday that all five hosts are identical and that the findings should therefore be the same across all of them. I just wanted to confirm if that’s still correct.”
+Finding Title
 
-If they reply “Yes”, you can continue with:
+Multiple Windows Local Privilege Escalation Vulnerabilities in Windows Components
 
-“Thanks for confirming. I did notice that around 90% of the vulnerabilities are common across all five hosts. However, there are a few vulnerabilities in the scan report that are unique to specific hosts.”
+⸻
 
-Then conclude with:
+Severity
 
-“To validate those host-specific findings and ensure we have complete evidence for every system, we’ll still need to run these two scripts on each of the five hosts and collect the output from each one.”
+High
 
-This comes across as collaborative rather than challenging their statement, while clearly explaining why you still need evidence from every host.
+(Overall severity is driven by the highest severity vulnerability.)
 
+⸻
 
+Overall CVSS v3.1
 
+7.8 (High)
 
-Here's a natural, professional script you can use during the meeting.
+Vector:
 
----
+CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H
 
-**Meeting Introduction**
+⸻
 
-"Hi everyone, thank you for joining.
+CWE
 
-The purpose of today's session is to validate a few vulnerabilities that were identified during the vulnerability scan. Rather than checking each finding individually, we've prepared two PowerShell scripts that collect the version and configuration information of the relevant software installed on each server. This helps us verify whether the reported vulnerabilities are actually applicable."
+CWE-269 – Improper Privilege Management
 
----
+(Appropriate for local privilege escalation vulnerabilities.)
 
-**Before Running the Scripts**
+⸻
 
-"I'd also like to assure you that these scripts are completely **read-only**. They do **not** make any changes to the server.
+Affected Assets
 
-They only query information such as:
+Hostname
 
-* Operating System version
-* Installed software versions
-* Browser versions
-* .NET, OpenSSL, Office, Firmware, and a few other components related to the reported vulnerabilities
+w01bfmor
 
-The scripts do not install, uninstall, modify, restart, or stop any services or applications. They simply read the required information and generate an output for our validation."
+w01bfmoq
 
----
+w01bfmol
 
-**What You'll Ask the Client to Do**
+w01bfmok
 
-"I'll share the two PowerShell scripts with you. We'll go through the five servers one by one.
+w01bfmoj
 
-Once you're logged into a server, please run the first script followed by the second script. We'll review the output together, save the results, and then move on to the next server."
+⸻
 
----
+Description
 
-**If They Ask Why This Is Needed**
+During the security assessment, multiple local privilege escalation vulnerabilities were identified affecting Microsoft Windows components installed on the target systems.
 
-"The vulnerability scanner identifies potential vulnerabilities based on detected software and versions. Before reporting them as valid findings, we need to verify the actual versions and configurations present on the server. This evidence helps us confirm whether a vulnerability is truly applicable or a false positive."
+The affected systems are running Windows 11 Enterprise 23H2 (Build 22631.7219). The identified vulnerabilities include:
 
----
+* CVE-2026-50507 – Microsoft Windows BitLocker Protection Mechanism Vulnerability
+* CVE-2026-45586 – Microsoft Windows Collaborative Translation Framework Link Resolution Vulnerability
 
-**Before Starting**
+An authenticated attacker with local access could exploit these vulnerabilities to elevate privileges and execute actions with higher privileges than intended. Successful exploitation may allow bypassing security controls, accessing protected resources, or performing unauthorized administrative actions.
 
-"If there are no questions, we can begin with the first server."
+⸻
 
-This keeps the explanation simple, professional, and reassuring while making it clear that the scripts are only collecting version and configuration information for validation purposes.
-------------------
-The attached output files were generated directly from the listed host(s) using the evidence collection scripts provided by the VM11 team. The files are being shared in their original form and have not been modified or tampered with after execution. They accurately represent the output produced by the scripts on the respective host(s).
+Steps to Reproduce
+
+1. Log in to the target Windows system.
+2. Identify the installed operating system version.
+3. Confirm the operating system build:
+
+Windows 11 Enterprise 23H2
+Build 22631.7219
+
+4. Compare the installed Windows build against the Microsoft Security Update Guide for:
+
+* CVE-2026-50507
+* CVE-2026-45586
+
+5. Observe that the installed build is affected by these vulnerabilities.
+
+⸻
+
+Resolution
+
+Apply the latest Microsoft cumulative security updates that remediate:
+
+* CVE-2026-50507
+* CVE-2026-45586
+
+After patching:
+
+* Verify the installed Windows build corresponds to the vendor-fixed version.
+* Reboot the affected systems after update installation.
+* Ensure all identical systems receive the same security updates.
+
+⸻
+
+Evidence
+
+Attach the following screenshots:
+
+Evidence 1
+
+Windows Operating System Version
+
+(Operating System Information showing Windows 11 Enterprise 23H2 Build 22631.7219)
+
+⸻
+
+Evidence 2
+
+Vulnerability Details – CVE-2026-50507
+
+(BitLocker vulnerability screenshot)
+
+⸻
+
+Evidence 3
+
+Vulnerability Details – CVE-2026-45586
+
+(Collaborative Translation Framework vulnerability screenshot)
+
+⸻
+
+This single finding covers both vulnerabilities across all five hosts because they affect the same operating system version and share the same remediation (install the latest Microsoft Windows cumulative security updates).
