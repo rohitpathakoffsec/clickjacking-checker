@@ -1,3 +1,5 @@
+(Get-ItemProperty "HKLM:\SOFTWARE\Microsoft\Office\ClickToRun\Configuration").VersionToReport
+
 You can say it naturally like this:
 
 “Arido had mentioned yesterday that all five hosts are identical and that the findings should therefore be the same across all of them. I just wanted to confirm if that’s still correct.”
