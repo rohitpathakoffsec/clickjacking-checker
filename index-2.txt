@@ -1,3 +1,23 @@
+Evidence
+
+Figure 1 – Operating System Version (Hosts W01BFMOR, W01BFMOK, and W01BFMOJ)
+
+Shows:
+
+Windows 11 Enterprise 23H2
+OS Version: 10.0.22631.7079
+
+Figure 2 – Operating System Version (Hosts W01BFMOL and W01BFMOQ)
+
+Shows:
+
+Windows 11 Enterprise 23H2
+OS Version: 10.0.22631.7219
+
+
+
+
+----------------------------------
 That's a good way to separate them. Since you've filtered by **Has Known Threats = TRUE** and **FALSE**, you can distinguish the findings based on exploitability rather than by product alone.
 
 ## Finding 1 (Has Known Threats = TRUE)
