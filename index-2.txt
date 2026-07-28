@@ -1,107 +1,63 @@
-Yes, you can absolutely cover all of them in a single finding. Since the finding is an aggregation of multiple version-based vulnerabilities, you don't need to list all 4,000+ CVEs in the description. Instead, summarize them by component and include the detailed CVE list in an appendix or table.
+Since this finding covers **multiple software components**, don't title the screenshots by individual CVEs. Instead, title them based on the **installed software versions** that were validated.
+
+A clean evidence section would be:
+
+### Evidence 1
+
+**Installed Windows Operating System Version**
+
+*Screenshot showing the Windows version and build number for the affected hosts.*
 
 ---
 
-# Finding Title
+### Evidence 2
 
-**Multiple Installed Software and Windows Components Running Versions with Known Security Vulnerabilities**
+**Installed Chromium-Based Browser Version**
 
----
-
-# Severity
-
-**Critical**
+*Screenshot showing the installed Microsoft Edge / Google Chrome version.*
 
 ---
 
-# Overall CVSS v3.1
+### Evidence 3
 
-**9.8 (Critical)**
+**Installed Microsoft .NET Runtime Version**
 
-**Vector:**
-`CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H`
-
----
-
-# CWE
-
-**CWE-1104 – Use of Unmaintained Third-Party Components**
+*Screenshot showing the installed Microsoft .NET Runtime version.*
 
 ---
 
-# Affected Assets
+### Evidence 4
 
-* W01BFMOR
-* W01BFMOQ
-* W01BFMOL
-* W01BFMOK
-* W01BFMOJ
+**Installed OpenSSL Version**
+
+*Screenshot showing the installed OpenSSL version.*
 
 ---
 
-# Description
+### Evidence 5
 
-During the security assessment, multiple installed software components and Windows operating system components were identified as running versions affected by publicly disclosed security vulnerabilities. Although these vulnerabilities are not currently associated with known threat activity based on the available threat intelligence, they remain valid security findings that increase the attack surface of the affected systems.
+**Installed Axios Package Version**
 
-The identified vulnerabilities affect Windows operating system components, Chromium-based applications, OpenSSL, Microsoft .NET Runtime, Microsoft Visual Studio components, Axios, and Forescout. Depending on the affected component, successful exploitation could allow attackers to perform remote code execution, information disclosure, security feature bypass, denial of service, authentication bypass, or privilege escalation.
-
-The identified vulnerable components and associated CVEs are summarized below.
+*Screenshot showing the installed Axios version.*
 
 ---
 
-# Affected Components
+### Evidence 6
 
-| Component                                                                              | Valid Vulnerabilities | Representative CVEs*                                                                                                                                                                                                                                                                   |
-| -------------------------------------------------------------------------------------- | --------------------: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Chromium-based Applications                                                            |                  3015 | **CVE-2026-58281 – CVE-2026-58300**, **CVE-2026-57XXX**, **CVE-2026-56XXX**, *(complete list in Appendix A)*                                                                                                                                                                           |
-| Windows Components *(excluding CVE-2026-50507 and CVE-2026-45586 reported separately)* |                   853 | **CVE-2026-50508**, **CVE-2026-50526**, **CVE-2026-50541**, **CVE-2026-51773**, **CVE-2026-54196**, **CVE-2026-54366**, **CVE-2026-54563**, **CVE-2026-54752**, **CVE-2026-56391**, **...Complete list in Appendix A**                                                                 |
-| OpenSSL                                                                                |                   235 | **CVE-2026-97076**, **CVE-2026-67383**, **CVE-2026-45447**, **CVE-2026-45446**, **CVE-2026-45445**, **...Complete list in Appendix A**                                                                                                                                                 |
-| Microsoft Visual Studio Components                                                     |                    70 | **[Insert all validated Visual Studio CVEs]**                                                                                                                                                                                                                                          |
-| Axios                                                                                  |                    20 | **CVE-2026-42264**, **CVE-2026-25369**, **...Complete list in Appendix A**                                                                                                                                                                                                             |
-| Microsoft .NET Runtime                                                                 |                    20 | **CVE-2026-50659**, **CVE-2026-50651**, **CVE-2026-50650**, **CVE-2026-50649**, **CVE-2026-50648**, **CVE-2026-50646**, **CVE-2026-50528**, **CVE-2026-50527**, **CVE-2026-50526**, **CVE-2026-50525**, **CVE-2026-50524**, **CVE-2026-47303**, **CVE-2026-47302**, **CVE-2026-47300** |
-| Forescout SecureConnector                                                              |                     5 | **[Insert validated Forescout CVEs]**                                                                                                                                                                                                                                                  |
+**Installed Microsoft Visual Studio Component Version**
 
-> ***** The complete list of validated CVEs should be provided in **Appendix A** (or an attached spreadsheet) to avoid making the finding excessively long.
+*Screenshot showing the installed Visual Studio component version.*
 
 ---
 
-# Steps to Reproduce
+### Evidence 7
 
-1. Enumerate installed operating system and software component versions.
-2. Identify the installed versions of Windows components and third-party software.
-3. Compare the installed versions with the vendor's security advisories and fixed versions.
-4. Verify that the installed versions fall within the affected version ranges.
-5. Confirm that updated vendor-supported versions are available.
+**Installed Forescout SecureConnector Version**
 
----
+*Screenshot showing the installed Forescout SecureConnector version.*
 
-# Resolution
+If you're showing the vendor advisory or fixed version alongside your validation, you can optionally add a caption under each screenshot:
 
-Upgrade all affected Windows components and third-party software to the latest vendor-supported versions that address the identified vulnerabilities. Implement a centralized patch management process to ensure timely deployment of security updates, remove unsupported software where applicable, and regularly review software inventories to identify outdated or vulnerable components.
+> **Figure X:** Installed version identified during validation and compared against the vendor's affected and fixed version information.
 
----
-
-# Evidence
-
-Attach screenshots showing the installed versions of:
-
-* Windows OS Version
-* OpenSSL
-* Microsoft Edge / Google Chrome
-* Microsoft .NET Runtime
-* Axios
-* Forescout
-* Microsoft Visual Studio (if collected)
-
----
-
-## About the CVE placeholders
-
-Because your finding represents **4,220 validated vulnerabilities**, listing every CVE directly inside the finding would make it impractical. The best practice is to:
-
-* Include **representative CVEs** in the finding (as above).
-* Add a sentence such as:
-
-> **The complete list of validated CVEs associated with each affected component is provided in Appendix A (or the attached validation spreadsheet).**
-
-This approach ensures **all validated CVEs are covered** while keeping the report readable and professional.
+This keeps the evidence section professional and aligned with the way you validated the findings.
