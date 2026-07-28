@@ -1,142 +1,95 @@
-Since all 5 hosts have the same CVE (CVE-2026-50507) and CVE-2026-45586, and you’ve confirmed earlier that the hosts are identical, you can combine them into one report finding.
-----
+That's a good way to separate them. Since you've filtered by **Has Known Threats = TRUE** and **FALSE**, you can distinguish the findings based on exploitability rather than by product alone.
 
-Here’s a more professional and detailed Description that starts with a generic overview and then explains both CVEs specifically.
+## Finding 1 (Has Known Threats = TRUE)
 
-⸻
+### Title
 
-Description
+**Windows Components with Actively Known Security Threats**
 
-During the vulnerability assessment, multiple local privilege escalation vulnerabilities were identified affecting Microsoft Windows components on the target systems. Successful exploitation of these vulnerabilities could allow an authenticated local attacker to obtain elevated privileges, bypass security controls, and execute actions with higher privileges than intended. This could lead to unauthorized access to sensitive data, modification of system configurations, or complete compromise of the affected host.
+or
 
-The assessment identified the following vulnerabilities:
+**Multiple Windows Local Privilege Escalation Vulnerabilities with Known Threat Activity**
 
-* CVE-2026-50507 – Microsoft Windows BitLocker Protection Mechanism Vulnerability: This vulnerability exists due to weaknesses in BitLocker’s protection mechanisms and insufficient authentication for certain critical functions. An authenticated attacker with physical or local access may exploit this issue to bypass BitLocker security protections, potentially allowing unauthorized access to encrypted data and weakening the confidentiality and integrity of the system.
-* CVE-2026-45586 – Microsoft Windows Collaborative Translation Framework Link Resolution Vulnerability: This vulnerability is caused by improper link resolution before file access (link following) within the Windows Collaborative Translation Framework. An authenticated local attacker could exploit this flaw to perform unauthorized file operations and elevate privileges, resulting in the execution of actions with higher privileges than intended and compromising the security of the affected system.
-
-The identified vulnerabilities affect all assessed hosts running the same Windows build and should be remediated by applying the latest Microsoft security updates provided for the affected operating system.
-⸻
-
-Finding Title
-
-Multiple Windows Local Privilege Escalation Vulnerabilities in Windows Components
-
-⸻
-
-Severity
-
-High
-
-(Overall severity is driven by the highest severity vulnerability.)
-
-⸻
-
-Overall CVSS v3.1
-
-7.8 (High)
-
-Vector:
-
-CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H
-
-⸻
-
-CWE
-
-CWE-269 – Improper Privilege Management
-
-(Appropriate for local privilege escalation vulnerabilities.)
-
-⸻
-
-Affected Assets
-
-Hostname
-
-w01bfmor
-
-w01bfmoq
-
-w01bfmol
-
-w01bfmok
-
-w01bfmoj
-
-⸻
-
-Description
-
-During the security assessment, multiple local privilege escalation vulnerabilities were identified affecting Microsoft Windows components installed on the target systems.
-
-The affected systems are running Windows 11 Enterprise 23H2 (Build 22631.7219). The identified vulnerabilities include:
-
-* CVE-2026-50507 – Microsoft Windows BitLocker Protection Mechanism Vulnerability
-* CVE-2026-45586 – Microsoft Windows Collaborative Translation Framework Link Resolution Vulnerability
-
-An authenticated attacker with local access could exploit these vulnerabilities to elevate privileges and execute actions with higher privileges than intended. Successful exploitation may allow bypassing security controls, accessing protected resources, or performing unauthorized administrative actions.
-
-⸻
-
-Steps to Reproduce
-
-1. Log in to the target Windows system.
-2. Identify the installed operating system version.
-3. Confirm the operating system build:
-
-Windows 11 Enterprise 23H2
-Build 22631.7219
-
-4. Compare the installed Windows build against the Microsoft Security Update Guide for:
+### Covers
 
 * CVE-2026-50507
 * CVE-2026-45586
 
-5. Observe that the installed build is affected by these vulnerabilities.
+### Description
 
-⸻
+Mention that:
 
-Resolution
+* These vulnerabilities affect Windows components.
+* They are associated with **known threat activity** (based on your scanner).
+* Successful exploitation could result in privilege escalation and compromise of the host.
+* Immediate remediation is recommended due to the presence of known threats.
 
-Apply the latest Microsoft cumulative security updates that remediate:
+### Severity
 
-* CVE-2026-50507
-* CVE-2026-45586
+**High**
 
-After patching:
+---
 
-* Verify the installed Windows build corresponds to the vendor-fixed version.
-* Reboot the affected systems after update installation.
-* Ensure all identical systems receive the same security updates.
+## Finding 2 (Has Known Threats = FALSE)
 
-⸻
+Instead of calling them "outdated components," make it clear these are vulnerabilities **without known active threat activity**.
 
-Evidence
+### Recommended Title
 
-Attach the following screenshots:
+**Multiple Software Components Containing Known Security Vulnerabilities**
 
-Evidence 1
+or
 
-Windows Operating System Version
+**Multiple Third-Party Software Components with Known Security Vulnerabilities**
 
-(Operating System Information showing Windows 11 Enterprise 23H2 Build 22631.7219)
+or (my preferred title)
 
-⸻
+**Multiple Installed Software Components Running Vulnerable Versions**
 
-Evidence 2
+---
 
-Vulnerability Details – CVE-2026-50507
+### Description
 
-(BitLocker vulnerability screenshot)
+During the assessment, multiple installed software components were identified as running versions affected by publicly disclosed security vulnerabilities. Although these vulnerabilities are **not currently associated with known threat activity** based on available threat intelligence, they remain exploitable under specific conditions and could be leveraged by attackers to compromise affected systems.
 
-⸻
+The identified vulnerabilities affect multiple third-party software components, including:
 
-Evidence 3
+* Chromium-based browsers
+* OpenSSL
+* Microsoft .NET Runtime
+* Axios
+* Microsoft Visual Studio components
+* Forescout
 
-Vulnerability Details – CVE-2026-45586
+Depending on the affected component, successful exploitation may result in remote code execution, information disclosure, security feature bypass, denial of service, authentication bypass, or privilege escalation. Timely updates are recommended to reduce the attack surface and maintain a secure software environment.
 
-(Collaborative Translation Framework vulnerability screenshot)
+---
 
-⸻
+### Affected Components
 
-This single finding covers both vulnerabilities across all five hosts because they affect the same operating system version and share the same remediation (install the latest Microsoft Windows cumulative security updates).
+| Component                          | Valid Vulnerabilities |
+| ---------------------------------- | --------------------: |
+| Chromium-based Applications        |                  3015 |
+| OpenSSL                            |                   235 |
+| Microsoft Visual Studio Components |                    70 |
+| Axios                              |                    20 |
+| Microsoft .NET Runtime             |                    20 |
+| Forescout                          |                     5 |
+
+---
+
+### Why this separation works
+
+**Finding 1**
+
+* Windows OS vulnerabilities
+* **Has Known Threats = TRUE**
+* Higher remediation priority
+
+**Finding 2**
+
+* Third-party software version vulnerabilities
+* **Has Known Threats = FALSE**
+* Still valid and should be remediated, but without evidence of known active threat activity according to your scanner
+
+This distinction is technically sound and provides a clear, risk-based prioritization for the client.
