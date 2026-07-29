@@ -1,3 +1,12 @@
+
+You can write:
+
+Thank you for the feedback. This finding combines multiple validated CVEs across different components. Some CVEs require local access (AV:L), while others can be exploited over the network (AV:N). The impact also varies between the CVEs. Because of this, one CVSS vector may not accurately represent all the vulnerabilities. Could you please suggest the preferred approach for reporting such aggregated findings?
+
+This is concise, simple, and professional.
+
+
+
 Since this finding covers **multiple software components**, don't title the screenshots by individual CVEs. Instead, title them based on the **installed software versions** that were validated.
 
 A clean evidence section would be:
