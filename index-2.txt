@@ -1,1 +1,1 @@
-The identified vulnerabilities affect the assessed hosts running Windows 11 Enterprise Version 23H2 Build 22631.7079. Hosts running Build 22631.7219 were manually validated against the vendor advisory and excluded from this finding.
+Note: This finding represents multiple validated CVEs across different software components. Since the individual CVEs have different CVSS vectors and impacts, the CVSS score and vector shown provide a consolidated assessment using the highest applicable metric values across the included vulnerabilities for consistent risk representation.
