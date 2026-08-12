@@ -1,1 +1,66 @@
-Note: This finding represents multiple validated CVEs across different software components. Since the individual CVEs have different CVSS vectors and impacts, the CVSS score and vector shown provide a consolidated assessment using the highest applicable metric values across the included vulnerabilities for consistent risk representation.
+Yes. Based on the complete set of screenshots, I would put the following comments in the correction/request section. I’ve written them so the pentester/application owner can directly identify the field and understand exactly what needs to be changed.
+
+🔴 Must Correct / Clarify
+
+#	Field	Comment to add
+1	Additional Documents → Does the application have any backend API? / Scope of Testing → Complete list of all API endpoints	Please reconcile these two fields. “Backend API” is marked as No, while “Complete list of all API endpoints” is marked as “Not ready yet.” If the application has no backend APIs, please update the API endpoints field to “N/A”. If backend APIs do exist, please update this field to Yes and provide/confirm the API endpoint scope or state that it is pending.
+2	Roles → Different roles defined in the application	Please review the selected role option. The application access section identifies both a high-privileged role (RESCP_ADMIN_UAT) and a low-privileged role (RESCP_USER_UAT). Please ensure the appropriate multiple-role option is selected and provide the corresponding role details so that the role structure is consistent throughout the form.
+3	Roles → Roles details	Please provide details for the in-scope roles, including the role name and privilege level/functionality. At minimum, please clarify the expected privileges for RESCP_ADMIN_UAT (high privileged) and RESCP_USER_UAT (low privileged).
+4	Application Access → How is access to the application controlled?	Please clarify the “AGNES, Others” response. If access is controlled only through AGNES, please remove “Others.” If another access-control mechanism is applicable, please specify it in the relevant field so the authentication/access model is clear for testing.
+5	Location constraints/Testing location → Does the application have location restriction	“Others” is selected, but the applicable location restriction is not specified. Please provide details of the restriction (e.g., VPN, IP allowlisting, network/location restriction, etc.). If there is no location restriction, please update the response accordingly.
+
+⸻
+
+🟠 Clarification Recommended
+
+#	Field	Comment to add
+6	Scope of Testing → Environment that should be tested	Please confirm that TE2 is the correct environment corresponding to the provided application URL (rescp-uat-ext.ibb.ubstest.com). The URL indicates “UAT”, while TE2 is selected as the test environment. Please confirm/update if required.
+7	Location constraints/Testing location → Any additional network restrictions	Please confirm whether any additional network restrictions apply to the testing environment. This should be consistent with the “Location restriction = Others” response and the statements that the environment is behind-the-barrier and Internet accessible. If none apply, please explicitly state N/A/None.
+
+⸻
+
+🟡 Minor wording / quality correction
+
+#	Field	Comment to add
+8	Mobile and thick client applications → What is the process for application installation?	As this is a web-only application, please update the response to a clearer statement such as “Not applicable – web-based application only.”
+
+⸻
+
+The comments I would actually submit
+
+If the tool allows only a limited number of correction comments, I would combine them into 5 comments rather than flooding the pentester with separate requests:
+
+Comment 1 — API scope
+
+[Field: Additional Documents → Does the application have any backend API? / Scope of Testing → Complete list of all API endpoints] Please reconcile these two fields. “Backend API” is marked as No, while “Complete list of all API endpoints” is marked as “Not ready yet.” If there are no backend APIs, please update the API endpoint field to N/A. If APIs do exist, please update the response to Yes and provide/confirm the API scope.
+
+Comment 2 — Roles
+
+[Field: Roles → Different roles defined in the application / Roles details] Please review and update the role information. The Application Access section identifies both RESCP_ADMIN_UAT (high privileged) and RESCP_USER_UAT (low privileged). Please ensure the appropriate multiple-role option is selected and provide the corresponding role details/privileges so that the Roles and Application Access sections are consistent.
+
+Comment 3 — Application access
+
+[Field: Application Access → How is access to the application controlled?] Please clarify the “AGNES, Others” response. If access is controlled only through AGNES, please remove “Others.” If another access-control mechanism is applicable, please specify it.
+
+Comment 4 — Location/network restrictions
+
+[Field: Location constraints/Testing location → Does the application have location restriction / Any additional network restrictions] “Others” is selected for location restriction, but no details are provided. Please specify the applicable restriction and confirm whether any additional network restrictions apply. If there are no such restrictions, please update the fields accordingly.
+
+Comment 5 — Environment
+
+[Field: Scope of Testing → Environment that should be tested] Please confirm that TE2 is the correct environment corresponding to the provided URL (rescp-uat-ext.ibb.ubstest.com), as the URL indicates UAT. Please update the environment selection if required.
+
+⸻
+
+My priority order
+
+If you’re doing the sign-off and want to be strict but not unnecessarily picky, I’d prioritize them:
+
+🔴 1. API inconsistency
+🔴 2. Roles inconsistency / missing role details
+🔴 3. AGNES vs “Others” access control
+🟠 4. Location restriction not explained
+🟠 5. TE2 vs UAT confirmation
+🟠 6. Additional network restrictions
+
+The API and roles items are the two I would definitely raise before signing off, because they directly affect how the pentest scope and test coverage will be interpreted.
