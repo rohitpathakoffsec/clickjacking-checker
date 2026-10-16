@@ -1,4 +1,0 @@
-Hi Krystof, just wanted to clarify the scope for AXON. The application is internal and has no GUI. The original pentest form lists Swagger/API endpoints, but during the technical scoping discussion the application owner clarified that AXON is primarily a Kafka-based microservice and suggested testing Kafka message injection instead of the APIs.
-
-Could you please confirm whether the API scope should be treated as an exception/exclusion and whether the Kafka testing should be considered a separate pentest?
-
